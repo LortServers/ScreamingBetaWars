@@ -30,7 +30,7 @@ public class Main extends JavaPlugin implements CommandExecutor, Listener {
         Bukkit.getPluginManager().registerEvent(Event.Type.PLAYER_RESPAWN, new me.screamingbetawars.Player(), Event.Priority.Highest, this);
         this.getCommand("bw").setExecutor(this);
         File file = new File(Bukkit.getServer().getPluginManager().getPlugin("ScreamingBetaWars").getDataFolder(), "config.yml");
-        if(!file.exists()) {
+        if(cfg.check("config", true).equals("true")) {
             try {
                 Bukkit.getServer().getPluginManager().getPlugin("ScreamingBetaWars").getDataFolder().mkdir();
                 file.createNewFile();
@@ -241,15 +241,6 @@ public class Main extends JavaPlugin implements CommandExecutor, Listener {
                             sender.sendMessage(ChatColor.AQUA + "Spawner has been set.");
                         } else sender.sendMessage(ChatColor.RED + cfg.check(args[1], true, true));
                     } else shortcuts.syntax(sender);
-                } else if(args[2].equals("spec")) {
-                    if(args.length == 5) {
-                        if (cfg.check(args[1], true, true).equals("true")) {
-                            cfg.putInt(args[1], "spec-x", player.getLocation().getBlockX());
-                            cfg.putInt(args[1], "spec-y", player.getLocation().getBlockY());
-                            cfg.putInt(args[1], "spec-z", player.getLocation().getBlockZ());
-                            sender.sendMessage(ChatColor.AQUA + "Position of a spectator has been set.");
-                        } else sender.sendMessage(ChatColor.RED + cfg.check(args[1], true, true));
-                    } else shortcuts.syntax(sender);
                 } else shortcuts.syntax(sender);
             }
         } else if(args[0].equals("join")) {
@@ -296,6 +287,5 @@ public class Main extends JavaPlugin implements CommandExecutor, Listener {
             else sender.sendMessage(ChatColor.RED + "You do not have permission to execute this command!");
             return false;
         }
-        // ^TODO if(!permissions(sender)) return;
     }
 }
