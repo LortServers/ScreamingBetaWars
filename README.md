@@ -5,7 +5,7 @@ Crappy remake of ScreamingBedWars, but for Minecraft Beta 1.7.3.
 
 **Plugin made as a joke for April Fools, not meant for actual use.**
 
-Like really, don't use it, at least now.
+Like really, don't use it, at least this branch.
 
 ### Why shouldn't I use it?
 
@@ -16,13 +16,11 @@ Well, quite a list:
 - It doesn't fully work, some parts don't even work and cause errors.
 - Code is unorganized, SnakeYaml usage doesn't help.
 
-**I will keep on updating this list until whole list will be ~~striked~~.**
+### NOTE:
 
-### So what now?
+This branch is an **original branch** - that means untouched code, just like it was at the release time.
 
-I will try to continue working on it until it's actually done, and will not cause further problems.
-
-After it's done, I will no longer push updates unless there will be some interest for it.
+You want to see changes? [Wrong branch then](https://github.com/LortServers/ScreamingBetaWars/).
 
 ### Plugin doesn't work.
 Well, like I said previously, it's for Beta 1.7.3. If you want to code, you have to add original CraftBukkit Beta 1.7.3 JAR as a library. If you want to test this plugin, you have to use that JAR as your server. Can't find the JAR? It's [here](https://archive.org/details/BukkitMCBeta173).
