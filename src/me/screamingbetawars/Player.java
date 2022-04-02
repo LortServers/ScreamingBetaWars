@@ -12,7 +12,6 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerListener;
 import org.bukkit.event.player.PlayerRespawnEvent;
 
-import java.io.File;
 import java.time.Instant;
 
 public class Player extends PlayerListener implements Listener {
@@ -27,17 +26,12 @@ public class Player extends PlayerListener implements Listener {
     }
 
     public void onPlayerUse(PlayerInteractEvent event) {
-        File[] list = Game.game.getMaps();
-        if (list != null) {
-            for (File yaml_file : list) {
-                if (!yaml_file.isDirectory()) {
-                    if(ConfigManager.cfg.check(yaml_file.getName().replace(".yml", ""), true, false).equals("true")) {
-                        Location pos1 = ConfigManager.cfg.getLocation(yaml_file.getName().replace(".yml", ""), "pos1");
-                        Location pos2 = ConfigManager.cfg.getLocation(yaml_file.getName().replace(".yml", ""), "pos2");
-                        if((event.getAction() == Action.RIGHT_CLICK_BLOCK) || (event.getAction() == Action.LEFT_CLICK_BLOCK)) {
-                            if(Block.pos.check(pos1, pos2, event.getClickedBlock().getLocation()) == 3) event.setCancelled(true);
-                        }
-                    }
+        for (String map : ConfigManager.map_cache.keySet()) {
+            if(ConfigManager.cfg.check(map, true, false).equals("true")) {
+                Location pos1 = ConfigManager.cfg.getLocation(map, "pos1");
+                Location pos2 = ConfigManager.cfg.getLocation(map, "pos2");
+                if((event.getAction() == Action.RIGHT_CLICK_BLOCK) || (event.getAction() == Action.LEFT_CLICK_BLOCK)) {
+                    if(Block.pos.check(pos1, pos2, event.getClickedBlock().getLocation()) == 3) event.setCancelled(true);
                 }
             }
         }
