@@ -17,7 +17,7 @@ import java.io.File;
 import java.io.IOException;
 
 public class Main extends JavaPlugin implements CommandExecutor, Listener {
-
+    public static String version = "b1.7.3-0.2-dev";
     @Override
     public void onEnable() {
         Bukkit.getLogger().info("ScreamingBetaWars is starting...");
@@ -37,7 +37,7 @@ public class Main extends JavaPlugin implements CommandExecutor, Listener {
             } catch (IOException ignored) {}
         }
         if(cfg.get("config", "version") == null) {
-            cfg.put("config", "version", "b1.7.3-0.1");
+            cfg.put("config", "version", version);
             cfg.put("config", "respawn-time", "5");
             cfg.put("config", "debug", "false");
         }
@@ -51,12 +51,12 @@ public class Main extends JavaPlugin implements CommandExecutor, Listener {
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         Player player = sender.getServer().getPlayer(sender.getName());
         if(args.length == 0) {
-            sender.sendMessage(ChatColor.AQUA + "ScreamingBetaWars b1.7.3-0.1");
+            sender.sendMessage(ChatColor.AQUA + "ScreamingBetaWars " + version);
             sender.sendMessage(ChatColor.GOLD + "Experience true mini-games, our newest invention!");
             sender.sendMessage(ChatColor.GOLD + "We will keep on updating this plug-in.");
             sender.sendMessage(ChatColor.RED + "Type /bw help to get started.");
         } else if(args[0].equals("help")) {
-            sender.sendMessage(ChatColor.AQUA + "ScreamingBetaWars b1.7.3-0.1");
+            sender.sendMessage(ChatColor.AQUA + "ScreamingBetaWars " + version);
             sender.sendMessage(ChatColor.GOLD + "Experience true mini-games, our newest invention!");
             sender.sendMessage(ChatColor.GOLD + "Our list of commands:");
             sender.sendMessage(ChatColor.RED + "/bw help - brings up this command.");
@@ -70,7 +70,7 @@ public class Main extends JavaPlugin implements CommandExecutor, Listener {
         } else if(args[0].equals("map")) {
             if(!shortcuts.permissions(sender)) return true;
             if(args.length == 1) {
-                sender.sendMessage(ChatColor.AQUA + "ScreamingBetaWars b1.7.3-0.1");
+                sender.sendMessage(ChatColor.AQUA + "ScreamingBetaWars " + version);
                 sender.sendMessage(ChatColor.GOLD + "Everything about maps.");
                 sender.sendMessage(ChatColor.RED + "/bw map <name> create - creates the map.");
                 sender.sendMessage(ChatColor.RED + "/bw map <name> edit - edits the map.");
