@@ -13,6 +13,7 @@ Well, quite a list:
 - Current bugs spam in the console, AsyncRepeatingTask is causing huge lags and (most likely) ram leaks.
 - It doesn't fully work, some parts don't even work and cause errors.
 - Code is unorganized, SnakeYaml usage doesn't help.
+
 **I will keep on updating this list until whole list will be ~~striked~~.**
 
 ### So what now?
