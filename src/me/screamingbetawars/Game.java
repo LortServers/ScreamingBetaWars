@@ -1,6 +1,5 @@
 package me.screamingbetawars;
 
-import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -22,7 +21,6 @@ public class Game {
     public static HashMap<Sheep, String> npcs = new HashMap<>();
     public static HashMap<String, String> destroyed_beds = new HashMap<>();
     public static class game {
-        //TODO completely rewrite joined_players and teams
         public static String joinGame(String game, String nick) {
             if (!joined_players.containsKey(nick)) {
                 if (!games.containsKey(game)) games.put(game, false);
@@ -39,7 +37,6 @@ public class Game {
             for(String player : list.keySet()) Bukkit.getPlayer(player).sendMessage(ChatColor.AQUA + "Player " + nick + " has joined the map (" + list.size() + "/" + size + ")!");
             Map<String, Map<String, Object>> game_teams = new HashMap<>(getTeams(game));
             for (Map.Entry<String, Map<String, Object>> entry : getTeams(game).entrySet()) {
-            //    System.out.println(entry.getKey() + "/" + entry.getValue().get("size"));
                 if(Integer.parseInt((String) entry.getValue().get("size")) == countWithValue(joined_players, entry.getKey())) game_teams.remove(entry.getKey(), entry.getValue());
             }
             String teams = "";
@@ -52,10 +49,6 @@ public class Game {
                 }
             }
             return ChatColor.GOLD + "Please pick a team using /bw pick <team>. Available teams: " + teams + ".";
-        }
-
-        public static File[] getMaps() {
-            return Bukkit.getServer().getPluginManager().getPlugin("ScreamingBetaWars").getDataFolder().listFiles();
         }
 
         public static Map<String, Map<String, Object>> getTeams(String game) {
@@ -115,7 +108,7 @@ public class Game {
                 current_spawner.put("location", location);
                 current_spawner.put("type", cfg.get(game, "spawner-type-" + spawner));
                 current_spawner.put("time", cfg.get(game, "spawner-time-" + spawner));
-                spawner_list.put((String) spawner, current_spawner);
+                spawner_list.put(spawner, current_spawner);
             }
             return spawner_list;
         }
@@ -222,22 +215,10 @@ public class Game {
 
         public static void startGame(String game) {
             games.replace(game, true);
-            /*
-            Location map_pos1 = cfg.getLocation(game, "pos1");
-            Location map_pos2 = cfg.getLocation(game, "pos2");
-            Location lobby_pos1 = cfg.getLocation(game, "lobby1");
-            Location lobby_pos2 = cfg.getLocation(game, "lobby2");
-            Location lobby_pos = cfg.getLocation(game, "lobby-");
-            */
             Map<String, Map<String, Object>> map_teams = getTeams(game);
-            /*
-            Map<String, Map<String, Object>> map_spawners = getSpawners(game);
-            Location spectator_pos = cfg.getLocation(game, "spec-");
-            */
             if(teams.get(game).size() != getWithValue(joined_players, game).size()) {
                 Map<String, String> game_teams = new HashMap<>();
                 for (Map.Entry<String, Map<String, Object>> entry : map_teams.entrySet()) {
-                //    System.out.println(entry.getKey() + "/" + entry.getValue().get("size"));
                     game_teams.put(entry.getKey(), String.valueOf(entry.getValue().get("size")));
                 }
                 for(String player : getWithValue(joined_players, game).keySet()) {
@@ -289,17 +270,7 @@ public class Game {
             games.remove(game);
             return ChatColor.AQUA + "Map has been stopped successfully.";
         }
-
-        /*public static void createNpc(String game, Location location) {
-            EntityPlayer player = new EntityPlayer((((CraftServer) Bukkit.getServer()).getServer()), ((CraftWorld) Bukkit.getWorld(cfg.get(game, "world"))).getHandle(), "bd482739-767c-45dc-a1f8-c33c40530952", new ItemInWorldManager((WorldServer) ((CraftWorld) Bukkit.getWorld(cfg.get(game, "world"))).getHandle()));
-            //((CraftWorld) Bukkit.getWorld(cfg.get(game, "world"))).getHandle().addEntity(player);
-            //((CraftWorld) Bukkit.getWorld(cfg.get(game, "world"))).getHandle().players.remove(player);
-            Player npc = (Player) player.getBukkitEntity();
-            //npc.setDisplayName("Shop");
-            player.setLocation(location.getX(), location.getY(), location.getZ(), 0, 0);
-            npcs.put(npc, game);
-            ((CraftPlayer) Bukkit.getPlayer("test"))
-        }*/
+        
         public static void createNpc(String game, Location location) {
             Sheep npc = (Sheep) Bukkit.getWorld(cfg.get(game, "world")).spawnCreature(location, CreatureType.SHEEP);
             npc.setColor(DyeColor.GRAY);
