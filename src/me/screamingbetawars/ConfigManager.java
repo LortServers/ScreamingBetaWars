@@ -12,7 +12,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ConfigManager {
-
+    public static Map<String, Map<String, Object>> map_cache = new HashMap<>();
     public static class cfg {
         public static DumperOptions getYamlOptions() {
             DumperOptions options = new DumperOptions();
@@ -22,25 +22,31 @@ public class ConfigManager {
             return options;
         }
 
+        public static void update() {
+            File[] list = Bukkit.getServer().getPluginManager().getPlugin("ScreamingBetaWars").getDataFolder().listFiles();
+            if (list != null) {
+                for (File yaml_file : list) {
+                    if (!yaml_file.isDirectory()) {
+                        try {
+                        Yaml yaml = new Yaml(cfg.getYamlOptions());
+                        InputStream file = new FileInputStream(yaml_file);
+                        map_cache.put(yaml_file.getName().replace(".yml", ""), (Map<String, Object>) yaml.load(file));
+                        } catch(Exception ignored) {}
+                    }
+                }
+            }
+        }
+
         public static String check(String arg, boolean map_exists) {
-            File check_file = new File(Bukkit.getServer().getPluginManager().getPlugin("ScreamingBetaWars").getDataFolder(), arg + ".yml");
-            if (check_file.exists() == map_exists) return "true";
+            if (map_cache.containsKey(arg) == map_exists) return "true";
             else return ChatColor.RED + "Map already exists!";
         }
 
         public static String check(String arg, boolean map_exists, boolean edit) {
-            File check_file = new File(Bukkit.getServer().getPluginManager().getPlugin("ScreamingBetaWars").getDataFolder(), arg + ".yml");
-            if (check_file.exists() == map_exists) {
-                //try {
-                    //Yaml yaml = new Yaml(cfg.getYamlOptions());
-                    //InputStream file = new FileInputStream(check_file);
-                    //Map<String, Object> map_data = (Map<String, Object>) yaml.load(file);
-                    if(cfg.get(arg, "edit") == null) return "false";
-                    if(cfg.get(arg, "edit").equals(String.valueOf(edit))) return "true";
-                    else return ChatColor.RED + "Map is not being edited!";
-                //} catch (FileNotFoundException e) {
-                //    return ChatColor.RED + "Something went wrong. Please contact us using this error code: 0x000001.";
-                //}
+            if (check(arg, true).equals(String.valueOf(map_exists))) {
+                if(cfg.get(arg, "edit") == null) return "false";
+                if(cfg.get(arg, "edit").equals(String.valueOf(edit))) return "true";
+                else return ChatColor.RED + "Map is not being edited!";
             } else return ChatColor.RED + "Map not found.";
         }
 
@@ -48,11 +54,12 @@ public class ConfigManager {
             try {
                 File check_file = new File(Bukkit.getServer().getPluginManager().getPlugin("ScreamingBetaWars").getDataFolder(), arg + ".yml");
                 Yaml yaml = new Yaml(cfg.getYamlOptions());
-                InputStream file = new FileInputStream(check_file);
-                Map<String, Object> map_data = (Map<String, Object>) yaml.load(file);
+                Map<String, Object> map_data = map_cache.get(arg);
                 PrintWriter file_save = new PrintWriter(check_file);
                 map_data.put(key, value);
                 yaml.dump(map_data, file_save);
+                if(map_cache.containsKey(arg)) map_cache.get(arg).replace(key, value);
+                else map_cache.get(arg).put(key, value);
             } catch(Exception ignored) {}
         }
 
@@ -60,50 +67,29 @@ public class ConfigManager {
             try {
                 File check_file = new File(Bukkit.getServer().getPluginManager().getPlugin("ScreamingBetaWars").getDataFolder(), arg + ".yml");
                 Yaml yaml = new Yaml(cfg.getYamlOptions());
-                InputStream file = new FileInputStream(check_file);
-                Map<String, Object> map_data = (Map<String, Object>) yaml.load(file);
+                Map<String, Object> map_data = map_cache.get(arg);
                 PrintWriter file_save = new PrintWriter(check_file);
                 map_data.put(key, value);
                 yaml.dump(map_data, file_save);
+                if(map_cache.containsKey(arg)) map_cache.get(arg).replace(key, value);
+                else map_cache.get(arg).put(key, value);
             } catch(Exception ignored) {}
         }
-        /*
-        public static void put(String arg, String category, String item, String key, String value) {
-            try {
-                File check_file = new File(Bukkit.getServer().getPluginManager().getPlugin("ScreamingBetaWars").getDataFolder(), arg + ".yml");
-                Yaml yaml = new Yaml(cfg.getYamlOptions());
-                InputStream file = new FileInputStream(check_file);
-                Map<String, Object> map_data = (Map<String, Object>) yaml.load(file);
-                Map<String, Map<String, String>> list_current = new HashMap<>((Map<String, Map<String, String>>) map_data.get(category));
-                PrintWriter file_save = new PrintWriter(check_file);
-                Map<String, String> data = new HashMap<>();
-                data.put(key, value);
-                list_current.put(item, data);
-                map_data.put(category, list_current);
-                yaml.dump(map_data, file_save);
-            } catch(Exception ignored) {}
-        }
-        */
+
         public static void remove(String arg, String key) {
             try {
                 File check_file = new File(Bukkit.getServer().getPluginManager().getPlugin("ScreamingBetaWars").getDataFolder(), arg + ".yml");
                 Yaml yaml = new Yaml(cfg.getYamlOptions());
-                InputStream file = new FileInputStream(check_file);
-                Map<String, Object> map_data = (Map<String, Object>) yaml.load(file);
+                Map<String, Object> map_data = map_cache.get(arg);
                 PrintWriter file_save = new PrintWriter(check_file);
                 map_data.remove(key);
                 yaml.dump(map_data, file_save);
+                map_cache.get(arg).remove(key);
             } catch(Exception ignored) {}
         }
 
         public static boolean find(String arg, String key) {
-            try {
-                File check_file = new File(Bukkit.getServer().getPluginManager().getPlugin("ScreamingBetaWars").getDataFolder(), arg + ".yml");
-                Yaml yaml = new Yaml(cfg.getYamlOptions());
-                InputStream file = new FileInputStream(check_file);
-                Map<String, Object> map_data = (Map<String, Object>) yaml.load(file);
-                return map_data.containsKey(key);
-            } catch(Exception e) { return false; }
+                return map_cache.get(arg).containsKey(key);
         }
 
         public static String create(String arg, CommandSender sender) {
@@ -117,6 +103,12 @@ public class ConfigManager {
                     cfg.put(arg, "edit", "true");
                     cfg.put(arg, "spawners", "1");
                     cfg.put(arg, "world", sender.getServer().getPlayer(sender.getName()).getWorld().getName());
+                    Map<String, Object> args = new HashMap<>();
+                    args.put("version", "b1.7.3-0.1");
+                    args.put("edit", "true");
+                    args.put("spawners", "1");
+                    args.put("world", sender.getServer().getPlayer(sender.getName()).getWorld().getName());
+                    map_cache.put(arg, args);
                     return ChatColor.AQUA + "Map \"" + arg + "\" created successfully.";
                 } catch (Exception e) {
                     return ChatColor.RED + "Something went wrong. Please contact us using this error code: 0x000002.";
@@ -125,32 +117,15 @@ public class ConfigManager {
         }
 
         public static String get(String arg, String key) {
-            try {
-                File check_file = new File(Bukkit.getServer().getPluginManager().getPlugin("ScreamingBetaWars").getDataFolder(), arg + ".yml");
-                Yaml yaml = new Yaml(cfg.getYamlOptions());
-                InputStream file = new FileInputStream(check_file);
-                Map<String, Object> map_data = (Map<String, Object>) yaml.load(file);
-                return (String) map_data.get(key);
-            } catch(Exception e) { return null; }
+            return (String) map_cache.get(arg).get(key);
         }
 
         public static int getInt(String arg, String key) {
-            try {
-                File check_file = new File(Bukkit.getServer().getPluginManager().getPlugin("ScreamingBetaWars").getDataFolder(), arg + ".yml");
-                Yaml yaml = new Yaml(cfg.getYamlOptions());
-                InputStream file = new FileInputStream(check_file);
-                Map<String, Object> map_data = (Map<String, Object>) yaml.load(file);
-                return (int) map_data.get(key);
-            } catch(Exception e) { return 0; }
+            return (int) map_cache.get(arg).get(key);
         }
 
         public static Map<String, Object> get(String arg) {
-            try {
-                File check_file = new File(Bukkit.getServer().getPluginManager().getPlugin("ScreamingBetaWars").getDataFolder(), arg + ".yml");
-                Yaml yaml = new Yaml(cfg.getYamlOptions());
-                InputStream file = new FileInputStream(check_file);
-                return (Map<String, Object>) yaml.load(file);
-            } catch(Exception e) { return new HashMap<>(); }
+            return map_cache.get(arg);
         }
 
         public static Location getLocation(String arg, String key) {
