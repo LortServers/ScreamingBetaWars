@@ -1,0 +1,9 @@
+name: ScreamingBetaWars
+version: b1.7.3-0.1
+author: Lort533
+main: me.screamingbetawars.Main
+description: Experience our new invention - Bed Wars!
+commands:
+  bw:
+    description: Only command we have as of now.
+    usage: /bw
