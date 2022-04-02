@@ -99,12 +99,12 @@ public class ConfigManager {
                 try {
                     Bukkit.getServer().getPluginManager().getPlugin("ScreamingBetaWars").getDataFolder().mkdir();
                     file.createNewFile();
-                    cfg.put(arg, "version", "b1.7.3-0.1");
+                    cfg.put(arg, "version", Main.version);
                     cfg.put(arg, "edit", "true");
                     cfg.put(arg, "spawners", "1");
                     cfg.put(arg, "world", sender.getServer().getPlayer(sender.getName()).getWorld().getName());
                     Map<String, Object> args = new HashMap<>();
-                    args.put("version", "b1.7.3-0.1");
+                    args.put("version", Main.version);
                     args.put("edit", "true");
                     args.put("spawners", "1");
                     args.put("world", sender.getServer().getPlayer(sender.getName()).getWorld().getName());
@@ -147,6 +147,5 @@ public class ConfigManager {
             }
             return list;
         }
-
     }
 }
