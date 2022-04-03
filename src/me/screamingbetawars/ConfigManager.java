@@ -93,22 +93,16 @@ public class ConfigManager {
         }
 
         public static String create(String arg, CommandSender sender) {
-            File file = new File(Bukkit.getServer().getPluginManager().getPlugin("ScreamingBetaWars").getDataFolder(), arg + ".yml");
             if(arg.equals("config")) return ChatColor.RED + "You can't name your map \"config\", it's been used by the plugin itself!";
-            if(!file.exists()) {
+            if(!map_cache.containsKey(arg)) {
                 try {
                     Bukkit.getServer().getPluginManager().getPlugin("ScreamingBetaWars").getDataFolder().mkdir();
-                    file.createNewFile();
+                    new File(Bukkit.getServer().getPluginManager().getPlugin("ScreamingBetaWars").getDataFolder(), arg + ".yml").createNewFile();
+                    map_cache.put(arg, new HashMap<>());
                     cfg.put(arg, "version", Main.version);
                     cfg.put(arg, "edit", "true");
                     cfg.put(arg, "spawners", "1");
                     cfg.put(arg, "world", sender.getServer().getPlayer(sender.getName()).getWorld().getName());
-                    Map<String, Object> args = new HashMap<>();
-                    args.put("version", Main.version);
-                    args.put("edit", "true");
-                    args.put("spawners", "1");
-                    args.put("world", sender.getServer().getPlayer(sender.getName()).getWorld().getName());
-                    map_cache.put(arg, args);
                     return ChatColor.AQUA + "Map \"" + arg + "\" created successfully.";
                 } catch (Exception e) {
                     return ChatColor.RED + "Something went wrong. Please contact us using this error code: 0x000002.";
