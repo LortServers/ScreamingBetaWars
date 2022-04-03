@@ -15,6 +15,7 @@ import me.screamingbetawars.Game.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 
 public class Main extends JavaPlugin implements CommandExecutor, Listener {
     public static String version = "b1.7.3-0.2-dev";
@@ -29,11 +30,13 @@ public class Main extends JavaPlugin implements CommandExecutor, Listener {
         Bukkit.getPluginManager().registerEvent(Event.Type.PLAYER_INTERACT_ENTITY, new me.screamingbetawars.Player(), Event.Priority.Highest, this);
         Bukkit.getPluginManager().registerEvent(Event.Type.PLAYER_RESPAWN, new me.screamingbetawars.Player(), Event.Priority.Highest, this);
         this.getCommand("bw").setExecutor(this);
+        cfg.update();
         File file = new File(Bukkit.getServer().getPluginManager().getPlugin("ScreamingBetaWars").getDataFolder(), "config.yml");
-        if(cfg.check("config", true).equals("true")) {
+        if(!cfg.check("config", true).equals("true")) {
             try {
                 Bukkit.getServer().getPluginManager().getPlugin("ScreamingBetaWars").getDataFolder().mkdir();
                 file.createNewFile();
+                ConfigManager.map_cache.put("config", new HashMap<>());
             } catch (IOException ignored) {}
         }
         if(cfg.get("config", "version") == null) {
