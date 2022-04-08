@@ -63,6 +63,12 @@ public class ConfigManager {
             } catch(Exception ignored) {}
         }
 
+        public static void putLocation(String arg, String key, String nick) {
+            cfg.put(arg, key.replace("?", "x"), Bukkit.getPlayer(nick).getLocation().getBlockX());
+            cfg.put(arg, key.replace("?", "y"), Bukkit.getPlayer(nick).getLocation().getBlockY());
+            cfg.put(arg, key.replace("?", "z"), Bukkit.getPlayer(nick).getLocation().getBlockZ());
+        }
+
         public static void remove(String arg, String key) {
             try {
                 File check_file = new File(Bukkit.getServer().getPluginManager().getPlugin("ScreamingBetaWars").getDataFolder(), arg + ".yml");
@@ -75,8 +81,14 @@ public class ConfigManager {
             } catch(Exception ignored) {}
         }
 
+        public static void removeLocation(String arg, String key) {
+            cfg.remove(arg, key.replace("?", "x"));
+            cfg.remove(arg, key.replace("?", "y"));
+            cfg.remove(arg, key.replace("?", "z"));
+        }
+
         public static boolean find(String arg, String key) {
-                return map_cache.get(arg).containsKey(key);
+            return map_cache.get(arg).containsKey(key);
         }
 
         public static String create(String arg, CommandSender sender) {
