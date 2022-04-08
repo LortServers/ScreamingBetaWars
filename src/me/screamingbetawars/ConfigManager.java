@@ -50,20 +50,7 @@ public class ConfigManager {
             } else return ChatColor.RED + "Map not found.";
         }
 
-        public static void put(String arg, String key, String value) {
-            try {
-                File check_file = new File(Bukkit.getServer().getPluginManager().getPlugin("ScreamingBetaWars").getDataFolder(), arg + ".yml");
-                Yaml yaml = new Yaml(cfg.getYamlOptions());
-                Map<String, Object> map_data = map_cache.get(arg);
-                PrintWriter file_save = new PrintWriter(check_file);
-                map_data.put(key, value);
-                yaml.dump(map_data, file_save);
-                if(map_cache.containsKey(arg)) map_cache.get(arg).replace(key, value);
-                else map_cache.get(arg).put(key, value);
-            } catch(Exception ignored) {}
-        }
-
-        public static void putInt(String arg, String key, int value) {
+        public static void put(String arg, String key, Object value) {
             try {
                 File check_file = new File(Bukkit.getServer().getPluginManager().getPlugin("ScreamingBetaWars").getDataFolder(), arg + ".yml");
                 Yaml yaml = new Yaml(cfg.getYamlOptions());
@@ -127,14 +114,6 @@ public class ConfigManager {
         }
 
         public static Map<String, Object> getStartingWith(String arg, String pattern) {
-            Map<String, Object> list = cfg.get(arg);
-            for(String key : cfg.get(arg).keySet()) {
-                if(!key.startsWith(pattern)) list.remove(key);
-            }
-            return list;
-        }
-
-        public static Map<String, Object> getLocStartingWith(String arg, String pattern) {
             Map<String, Object> list = cfg.get(arg);
             for(String key : cfg.get(arg).keySet()) {
                 if(!key.startsWith(pattern)) list.remove(key);
