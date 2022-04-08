@@ -106,44 +106,44 @@ public class Main extends JavaPlugin implements CommandExecutor, Listener {
                     } else sender.sendMessage(ChatColor.RED + cfg.check(args[1], true, true));
                 } else if(args[2].equals("pos1")) {
                     if(cfg.check(args[1], true, true).equals("true")) {
-                        cfg.putInt(args[1], "pos1x", player.getLocation().getBlockX());
-                        cfg.putInt(args[1], "pos1y", player.getLocation().getBlockY());
-                        cfg.putInt(args[1], "pos1z", player.getLocation().getBlockZ());
+                        cfg.put(args[1], "pos1x", player.getLocation().getBlockX());
+                        cfg.put(args[1], "pos1y", player.getLocation().getBlockY());
+                        cfg.put(args[1], "pos1z", player.getLocation().getBlockZ());
                         sender.sendMessage(ChatColor.AQUA + "First position has been set.");
                     } else sender.sendMessage(ChatColor.RED + cfg.check(args[1], true, true));
                 } else if(args[2].equals("pos2")) {
                     if(cfg.check(args[1], true, true).equals("true")) {
-                        cfg.putInt(args[1], "pos2x", player.getLocation().getBlockX());
-                        cfg.putInt(args[1], "pos2y", player.getLocation().getBlockY());
-                        cfg.putInt(args[1], "pos2z", player.getLocation().getBlockZ());
+                        cfg.put(args[1], "pos2x", player.getLocation().getBlockX());
+                        cfg.put(args[1], "pos2y", player.getLocation().getBlockY());
+                        cfg.put(args[1], "pos2z", player.getLocation().getBlockZ());
                         sender.sendMessage(ChatColor.AQUA + "Second position has been set.");
                     } else sender.sendMessage(ChatColor.RED + cfg.check(args[1], true, true));
                 } else if(args[2].equals("lobby1")) {
                     if(cfg.check(args[1], true, true).equals("true")) {
-                        cfg.putInt(args[1], "lobby1x", player.getLocation().getBlockX());
-                        cfg.putInt(args[1], "lobby1y", player.getLocation().getBlockY());
-                        cfg.putInt(args[1], "lobby1z", player.getLocation().getBlockZ());
+                        cfg.put(args[1], "lobby1x", player.getLocation().getBlockX());
+                        cfg.put(args[1], "lobby1y", player.getLocation().getBlockY());
+                        cfg.put(args[1], "lobby1z", player.getLocation().getBlockZ());
                         sender.sendMessage(ChatColor.AQUA + "First position has been set.");
                     } else sender.sendMessage(ChatColor.RED + cfg.check(args[1], true, true));
                 } else if(args[2].equals("lobby2")) {
                     if(cfg.check(args[1], true, true).equals("true")) {
-                        cfg.putInt(args[1], "lobby2x", player.getLocation().getBlockX());
-                        cfg.putInt(args[1], "lobby2y", player.getLocation().getBlockY());
-                        cfg.putInt(args[1], "lobby2z", player.getLocation().getBlockZ());
+                        cfg.put(args[1], "lobby2x", player.getLocation().getBlockX());
+                        cfg.put(args[1], "lobby2y", player.getLocation().getBlockY());
+                        cfg.put(args[1], "lobby2z", player.getLocation().getBlockZ());
                         sender.sendMessage(ChatColor.AQUA + "Second position has been set.");
                     } else sender.sendMessage(ChatColor.RED + cfg.check(args[1], true, true));
                 } else if(args[2].equals("lobby")) {
                     if(cfg.check(args[1], true, true).equals("true")) {
-                        cfg.putInt(args[1], "lobby-x", player.getLocation().getBlockX());
-                        cfg.putInt(args[1], "lobby-y", player.getLocation().getBlockY());
-                        cfg.putInt(args[1], "lobby-z", player.getLocation().getBlockZ());
+                        cfg.put(args[1], "lobby-x", player.getLocation().getBlockX());
+                        cfg.put(args[1], "lobby-y", player.getLocation().getBlockY());
+                        cfg.put(args[1], "lobby-z", player.getLocation().getBlockZ());
                         sender.sendMessage(ChatColor.AQUA + "Lobby spawn has been set.");
                     } else sender.sendMessage(ChatColor.RED + cfg.check(args[1], true, true));
                 } else if(args[2].equals("spec")) {
                     if(cfg.check(args[1], true, true).equals("true")) {
-                        cfg.putInt(args[1], "spec-x", player.getLocation().getBlockX());
-                        cfg.putInt(args[1], "spec-y", player.getLocation().getBlockY());
-                        cfg.putInt(args[1], "spec-z", player.getLocation().getBlockZ());
+                        cfg.put(args[1], "spec-x", player.getLocation().getBlockX());
+                        cfg.put(args[1], "spec-y", player.getLocation().getBlockY());
+                        cfg.put(args[1], "spec-z", player.getLocation().getBlockZ());
                         sender.sendMessage(ChatColor.AQUA + "Spectator spawn has been set.");
                     } else sender.sendMessage(ChatColor.RED + cfg.check(args[1], true, true));
                 } else if(args[2].equals("team")) {
@@ -189,30 +189,30 @@ public class Main extends JavaPlugin implements CommandExecutor, Listener {
                             } else sender.sendMessage(ChatColor.RED + "Team does not exist.");
                         } else if(args[3].equals("bed1")) {
                             if (cfg.find(args[1], "team-" + args[4])) {
-                                cfg.putInt(args[1], "x1-bed-team-" + args[4], player.getLocation().getBlockX());
-                                cfg.putInt(args[1], "y1-bed-team-" + args[4], player.getLocation().getBlockY());
-                                cfg.putInt(args[1], "z1-bed-team-" + args[4], player.getLocation().getBlockZ());
+                                cfg.put(args[1], "x1-bed-team-" + args[4], player.getLocation().getBlockX());
+                                cfg.put(args[1], "y1-bed-team-" + args[4], player.getLocation().getBlockY());
+                                cfg.put(args[1], "z1-bed-team-" + args[4], player.getLocation().getBlockZ());
                                 sender.sendMessage(ChatColor.AQUA + "First bed position for team \"" + args[4] + "\" is set.");
                             } else sender.sendMessage(ChatColor.RED + "Team does not exist.");
                         } else if(args[3].equals("bed2")) {
                             if (cfg.find(args[1], "team-" + args[4])) {
-                                cfg.putInt(args[1], "x2-bed-team-" + args[4], player.getLocation().getBlockX());
-                                cfg.putInt(args[1], "y2-bed-team-" + args[4], player.getLocation().getBlockY());
-                                cfg.putInt(args[1], "z2-bed-team-" + args[4], player.getLocation().getBlockZ());
+                                cfg.put(args[1], "x2-bed-team-" + args[4], player.getLocation().getBlockX());
+                                cfg.put(args[1], "y2-bed-team-" + args[4], player.getLocation().getBlockY());
+                                cfg.put(args[1], "z2-bed-team-" + args[4], player.getLocation().getBlockZ());
                                 sender.sendMessage(ChatColor.AQUA + "Second bed position for team \"" + args[4] + "\" is set.");
                             } else sender.sendMessage(ChatColor.RED + "Team does not exist.");
                         } else if(args[3].equals("spawn")) {
                             if (cfg.find(args[1], "team-" + args[4])) {
-                                cfg.putInt(args[1], "x-spawn-team-" + args[4], player.getLocation().getBlockX());
-                                cfg.putInt(args[1], "y-spawn-team-" + args[4], player.getLocation().getBlockY());
-                                cfg.putInt(args[1], "z-spawn-team-" + args[4], player.getLocation().getBlockZ());
+                                cfg.put(args[1], "x-spawn-team-" + args[4], player.getLocation().getBlockX());
+                                cfg.put(args[1], "y-spawn-team-" + args[4], player.getLocation().getBlockY());
+                                cfg.put(args[1], "z-spawn-team-" + args[4], player.getLocation().getBlockZ());
                                 sender.sendMessage(ChatColor.AQUA + "Spawn for team \"" + args[4] + "\" is set.");
                             } else sender.sendMessage(ChatColor.RED + "Team does not exist.");
                         } else if(args[3].equals("shop")) {
                             if (cfg.find(args[1], "team-" + args[4])) {
-                                cfg.putInt(args[1], "villager-x-team-" + args[4], player.getLocation().getBlockX());
-                                cfg.putInt(args[1], "villager-y-team-" + args[4], player.getLocation().getBlockY());
-                                cfg.putInt(args[1], "villager-z-team-" + args[4], player.getLocation().getBlockZ());
+                                cfg.put(args[1], "villager-x-team-" + args[4], player.getLocation().getBlockX());
+                                cfg.put(args[1], "villager-y-team-" + args[4], player.getLocation().getBlockY());
+                                cfg.put(args[1], "villager-z-team-" + args[4], player.getLocation().getBlockZ());
                                 cfg.put(args[1], "villager-yaw-team-" + args[4], String.valueOf(player.getLocation().getYaw()));
                                 cfg.put(args[1], "villager-pitch-team-" + args[4], String.valueOf(player.getLocation().getPitch()));
                                 sender.sendMessage(ChatColor.AQUA + "Shop position for team \"" + args[4] + "\" is set.");
@@ -235,12 +235,12 @@ public class Main extends JavaPlugin implements CommandExecutor, Listener {
                                 return false;
                             }
                             int spawner = cfg.getInt(args[1], "spawners");
-                            cfg.putInt(args[1], "spawner-x-" + spawner, player.getLocation().getBlockX());
-                            cfg.putInt(args[1], "spawner-y-" + spawner, player.getLocation().getBlockY());
-                            cfg.putInt(args[1], "spawner-z-" + spawner, player.getLocation().getBlockZ());
+                            cfg.put(args[1], "spawner-x-" + spawner, player.getLocation().getBlockX());
+                            cfg.put(args[1], "spawner-y-" + spawner, player.getLocation().getBlockY());
+                            cfg.put(args[1], "spawner-z-" + spawner, player.getLocation().getBlockZ());
                             cfg.put(args[1], "spawner-type-" + spawner, args[3].toUpperCase());
                             cfg.put(args[1], "spawner-time-" + spawner, args[4]);
-                            cfg.putInt(args[1], "spawners", spawner + 1);
+                            cfg.put(args[1], "spawners", spawner + 1);
                             sender.sendMessage(ChatColor.AQUA + "Spawner has been set.");
                         } else sender.sendMessage(ChatColor.RED + cfg.check(args[1], true, true));
                     } else shortcuts.syntax(sender);
@@ -259,9 +259,9 @@ public class Main extends JavaPlugin implements CommandExecutor, Listener {
         }
         else if(args[0].equals("setspawn")) {
             if(!shortcuts.permissions(sender)) return true;
-            cfg.putInt("config", "spawn-x", player.getLocation().getBlockX());
-            cfg.putInt("config", "spawn-y", player.getLocation().getBlockY());
-            cfg.putInt("config", "spawn-z", player.getLocation().getBlockZ());
+            cfg.put("config", "spawn-x", player.getLocation().getBlockX());
+            cfg.put("config", "spawn-y", player.getLocation().getBlockY());
+            cfg.put("config", "spawn-z", player.getLocation().getBlockZ());
             cfg.put("config", "spawn-yaw", String.valueOf(player.getLocation().getYaw()));
             cfg.put("config", "spawn-pitch", String.valueOf(player.getLocation().getPitch()));
             sender.sendMessage(ChatColor.AQUA + "Spawn point has been set successfully!");
