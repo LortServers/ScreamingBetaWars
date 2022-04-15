@@ -270,9 +270,10 @@ public class Game {
             games.remove(game);
             return ChatColor.AQUA + "Map has been stopped successfully.";
         }
-        
+
         public static void createNpc(String game, Location location) {
             Sheep npc = (Sheep) Bukkit.getWorld(cfg.get(game, "world")).spawnCreature(location, CreatureType.SHEEP);
+            npcs.put(npc, game);
             npc.setColor(DyeColor.GRAY);
         }
     }
