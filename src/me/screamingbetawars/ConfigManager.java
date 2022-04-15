@@ -126,7 +126,7 @@ public class ConfigManager {
         }
 
         public static Map<String, Object> getStartingWith(String arg, String pattern) {
-            Map<String, Object> list = cfg.get(arg);
+            HashMap<String, Object> list = new HashMap<>(cfg.get(arg));
             for(String key : cfg.get(arg).keySet()) {
                 if(!key.startsWith(pattern)) list.remove(key);
             }
