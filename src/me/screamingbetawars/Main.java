@@ -48,6 +48,9 @@ public class Main extends JavaPlugin implements CommandExecutor, Listener {
     @Override
     public void onDisable() {
         Bukkit.getLogger().info("ScreamingBetaWars is shutting down...");
+        for(int id : Game.task_ids) {
+            Bukkit.getScheduler().cancelTask(id);
+        }
     }
 
     @Override
@@ -196,14 +199,13 @@ public class Main extends JavaPlugin implements CommandExecutor, Listener {
                 } else if(args[2].equals("spawner")) {
                     if(args.length == 5) {
                         if (cfg.check(args[1], true, true).equals("true")) {
-                            try {
-                                Material test = Material.getMaterial(args[3].toUpperCase());
-                            } catch (IllegalArgumentException e) {
+                            Material test = Material.getMaterial(args[3].toUpperCase());
+                            if(test == null) {
                                 shortcuts.custom(sender, "Incorrect item type!");
                                 return false;
                             }
                             try {
-                                int test = Integer.parseInt(args[4]);
+                                int test2 = Integer.parseInt(args[4]);
                             } catch (NumberFormatException e) {
                                 shortcuts.custom(sender, "Incorrect amount of seconds!");
                                 return false;
