@@ -1,5 +1,6 @@
 package me.screamingbetawars;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -20,6 +21,7 @@ public class Game {
     static HashMap<Material, Location> beds = new HashMap<>();
     public static HashMap<Sheep, String> npcs = new HashMap<>();
     public static HashMap<String, String> destroyed_beds = new HashMap<>();
+    public static ArrayList<Integer> task_ids = new ArrayList<>();
     public static class game {
         public static String joinGame(String game, String nick) {
             if (!joined_players.containsKey(nick)) {
@@ -248,12 +250,13 @@ public class Game {
             }
             for(Map<String, Object> shop : getTeams(game).values()) createNpc(game, (Location) shop.get("villager"));
             for(Map.Entry<String, Map<String, Object>> spawner : getSpawners(game).entrySet()) {
-                Bukkit.getServer().getScheduler().scheduleAsyncRepeatingTask(new Main(), new Runnable() {
+                int id = Bukkit.getServer().getScheduler().scheduleAsyncRepeatingTask(new Main(), new Runnable() {
                     public void run() {
                         if(games.get(game).equals(false)) return;
                         Bukkit.getWorld(cfg.get(game, "world")).dropItem((Location) spawner.getValue().get("location"), new ItemStack(Material.getMaterial(String.valueOf(spawner.getValue().get("type"))), 1));
                     }
                 }, 0L, Integer.parseInt(String.valueOf(spawner.getValue().get("time"))) * 20L);
+                task_ids.add(id);
             }
         }
 
@@ -267,6 +270,9 @@ public class Game {
             for(Map.Entry<Sheep, String> npc : npcs.entrySet()) if(npc.getValue().equals(game)) npc.getKey().eject();
             Map<String, String> list = getWithValue(joined_players, game);
             for(String player : list.keySet()) leaveGame(player);
+            for(int id : Game.task_ids) {
+                Bukkit.getScheduler().cancelTask(id);
+            }
             games.remove(game);
             return ChatColor.AQUA + "Map has been stopped successfully.";
         }
