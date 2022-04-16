@@ -122,7 +122,11 @@ public class ConfigManager {
         }
 
         public static Location getLocation(String arg, String key) {
-            return new Location(Bukkit.getServer().getWorld(cfg.get(arg, "world")), cfg.getInt(arg, key + "x"), cfg.getInt(arg, key + "y"), cfg.getInt(arg, key + "z"));
+            try {
+                return new Location(Bukkit.getServer().getWorld(cfg.get(arg, "world")), cfg.getInt(arg, key + "x"), cfg.getInt(arg, key + "y"), cfg.getInt(arg, key + "z"));
+            } catch(Exception e) {
+                return null;
+            }
         }
 
         public static Map<String, Object> getStartingWith(String arg, String pattern) {
