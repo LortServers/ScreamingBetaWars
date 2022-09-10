@@ -12,7 +12,7 @@ Like really, don't use it, at least now.
 Well, quite a list:
 
 - This plugin abuses ram, ~~disk usage,~~ and cpu.
-- ~~Current bugs are causing spam in the console, AsyncRepeatingTask is causing huge lags and (most likely) ram leaks.~~ (most likely fully fixed)
+- ~~Current bugs are causing spam in the console,~~ AsyncRepeatingTask is causing huge lags ~~and (most likely) ram leaks~~. (most likely fully fixed)
 - It doesn't fully work, some parts don't even work ~~and cause errors~~ (after current tests, it seems like fully good config doesn't cause errors).
 - Code is unorganized, SnakeYaml usage doesn't help.
 
