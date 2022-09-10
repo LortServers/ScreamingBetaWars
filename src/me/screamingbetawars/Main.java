@@ -9,25 +9,28 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.Listener;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import me.screamingbetawars.ConfigManager.*;
 import me.screamingbetawars.Game.*;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
+import java.util.*;
 
-public class Main extends JavaPlugin implements CommandExecutor, Listener {
+public class Main extends JavaPlugin implements CommandExecutor, Listener, EventListener {
     public static String version = "b1.7.3-0.2-dev";
+    public static Plugin instance;
     @Override
     public void onEnable() {
+        instance = this;
         Bukkit.getLogger().info("ScreamingBetaWars is starting...");
         Bukkit.getPluginManager().registerEvent(Event.Type.BLOCK_BREAK, new Block(), Event.Priority.Highest, this);
         Bukkit.getPluginManager().registerEvent(Event.Type.BLOCK_PLACE, new Block(), Event.Priority.Highest, this);
         Bukkit.getPluginManager().registerEvent(Event.Type.BLOCK_BURN, new Block(), Event.Priority.Highest, this);
         Bukkit.getPluginManager().registerEvent(Event.Type.ENTITY_DEATH, new Death(), Event.Priority.Highest, this);
         Bukkit.getPluginManager().registerEvent(Event.Type.PLAYER_INTERACT, new me.screamingbetawars.Player(), Event.Priority.Highest, this);
-        Bukkit.getPluginManager().registerEvent(Event.Type.PLAYER_INTERACT_ENTITY, new me.screamingbetawars.Player(), Event.Priority.Highest, this);
+        Bukkit.getPluginManager().registerEvent(Event.Type.PLAYER_INTERACT_ENTITY, new me.screamingbetawars.Entity(), Event.Priority.Normal, this);
         Bukkit.getPluginManager().registerEvent(Event.Type.PLAYER_RESPAWN, new me.screamingbetawars.Player(), Event.Priority.Highest, this);
         this.getCommand("bw").setExecutor(this);
         cfg.update();
@@ -48,8 +51,10 @@ public class Main extends JavaPlugin implements CommandExecutor, Listener {
     @Override
     public void onDisable() {
         Bukkit.getLogger().info("ScreamingBetaWars is shutting down...");
-        for(int id : Game.task_ids) {
-            Bukkit.getScheduler().cancelTask(id);
+        HashMap<Integer, String> task_copy = new HashMap<>(Game.task_ids);
+        for(Map.Entry<Integer, String> data : task_copy.entrySet()) {
+            Bukkit.getScheduler().cancelTask(data.getKey());
+            Game.task_ids.remove(data.getKey());
         }
     }
 
@@ -230,8 +235,7 @@ public class Main extends JavaPlugin implements CommandExecutor, Listener {
         else if(args[0].equals("start")) {
             if(!shortcuts.permissions(sender)) return true;
             sender.sendMessage(game.forceStart(sender.getName()));
-        }
-        else if(args[0].equals("setspawn")) {
+        } else if(args[0].equals("setspawn")) {
             if(!shortcuts.permissions(sender)) return true;
             cfg.putLocation("config", "spawn-?", player.getName());
             cfg.put("config", "spawn-yaw", String.valueOf(player.getLocation().getYaw()));
@@ -247,7 +251,6 @@ public class Main extends JavaPlugin implements CommandExecutor, Listener {
         }
         return true;
     }
-
     public static class shortcuts {
         public static void syntax(CommandSender sender) {
             sender.sendMessage(ChatColor.RED + "Incorrect syntax!");
