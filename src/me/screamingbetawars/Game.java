@@ -1,9 +1,6 @@
 package me.screamingbetawars;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -19,9 +16,9 @@ public class Game {
     public static HashMap<String, String> joined_players = new HashMap<>();
     static HashMap<String, Map<String, String>> teams = new HashMap<>();
     static HashMap<Material, Location> beds = new HashMap<>();
-    public static HashMap<Sheep, String> npcs = new HashMap<>();
+    public static HashMap<Integer, Map.Entry<String, Location>> npcs = new HashMap<>();
     public static HashMap<String, String> destroyed_beds = new HashMap<>();
-    public static ArrayList<Integer> task_ids = new ArrayList<>();
+    public static HashMap<Integer, String> task_ids = new HashMap<>();
     public static class game {
         public static String joinGame(String game, String nick) {
             if (!joined_players.containsKey(nick)) {
@@ -252,11 +249,11 @@ public class Game {
             for(Map.Entry<String, Map<String, Object>> spawner : getSpawners(game).entrySet()) {
                 int id = Bukkit.getServer().getScheduler().scheduleAsyncRepeatingTask(new Main(), new Runnable() {
                     public void run() {
-                        if(games.get(game).equals(false)) return;
+                        if(!games.get(game)) return;
                         Bukkit.getWorld(cfg.get(game, "world")).dropItem((Location) spawner.getValue().get("location"), new ItemStack(Material.getMaterial(String.valueOf(spawner.getValue().get("type"))), 1));
                     }
                 }, 0L, Integer.parseInt(String.valueOf(spawner.getValue().get("time"))) * 20L);
-                task_ids.add(id);
+                task_ids.put(id, game);
             }
         }
 
@@ -267,11 +264,23 @@ public class Game {
             for(Map.Entry<Material, Location> bed : beds.entrySet()) {
                 Bukkit.getWorld(cfg.get(game, "world")).getBlockAt(bed.getValue()).setType(bed.getKey());
             }
-            for(Map.Entry<Sheep, String> npc : npcs.entrySet()) if(npc.getValue().equals(game)) npc.getKey().eject();
+            //for(Map.Entry<Integer, String> npc : npcs.entrySet()) ;
             Map<String, String> list = getWithValue(joined_players, game);
             for(String player : list.keySet()) leaveGame(player);
-            for(int id : Game.task_ids) {
-                Bukkit.getScheduler().cancelTask(id);
+            HashMap<Integer, String> tasks_copy = new HashMap<>(task_ids);
+            for(Map.Entry<Integer, String> data : tasks_copy.entrySet()) {
+                Bukkit.getServer().broadcastMessage(data.getKey() + " " + data.getValue() + " " + task_ids.size());
+                if(data.getValue().equals(game)) {
+                    Bukkit.getScheduler().cancelTask(data.getKey());
+                    task_ids.remove(data.getKey());
+                }
+            }
+            HashMap<Integer, Map.Entry<String, Location>> npcs_copy = new HashMap<>(npcs);
+            for(Map.Entry<Integer, Map.Entry<String, Location>> data : npcs_copy.entrySet()) {
+                try {
+                    if(data.getValue().getKey().equals(game)) data.getValue().getValue().getWorld().getEntities().get(data.getKey()).remove();
+                    npcs.remove(data.getKey());
+                } catch(Exception ignored) {}
             }
             games.remove(game);
             return ChatColor.AQUA + "Map has been stopped successfully.";
@@ -279,8 +288,16 @@ public class Game {
 
         public static void createNpc(String game, Location location) {
             Sheep npc = (Sheep) Bukkit.getWorld(cfg.get(game, "world")).spawnCreature(location, CreatureType.SHEEP);
-            npcs.put(npc, game);
+            npcs.put(npc.getEntityId(), new AbstractMap.SimpleEntry<>(game, location));
             npc.setColor(DyeColor.GRAY);
+            int id = Bukkit.getScheduler().scheduleAsyncRepeatingTask(Main.instance, new Runnable() {
+                @Override
+                public void run() {
+                    npc.teleport(location);
+                }
+            }, 0L, 1L);
+            task_ids.put(id, game);
+            Bukkit.getServer().broadcastMessage(game + " " + id + " " + task_ids.size());
         }
     }
 }
