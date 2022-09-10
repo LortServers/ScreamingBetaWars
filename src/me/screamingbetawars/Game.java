@@ -264,12 +264,10 @@ public class Game {
             for(Map.Entry<Material, Location> bed : beds.entrySet()) {
                 Bukkit.getWorld(cfg.get(game, "world")).getBlockAt(bed.getValue()).setType(bed.getKey());
             }
-            //for(Map.Entry<Integer, String> npc : npcs.entrySet()) ;
             Map<String, String> list = getWithValue(joined_players, game);
             for(String player : list.keySet()) leaveGame(player);
             HashMap<Integer, String> tasks_copy = new HashMap<>(task_ids);
             for(Map.Entry<Integer, String> data : tasks_copy.entrySet()) {
-                Bukkit.getServer().broadcastMessage(data.getKey() + " " + data.getValue() + " " + task_ids.size());
                 if(data.getValue().equals(game)) {
                     Bukkit.getScheduler().cancelTask(data.getKey());
                     task_ids.remove(data.getKey());
@@ -297,7 +295,6 @@ public class Game {
                 }
             }, 0L, 1L);
             task_ids.put(id, game);
-            Bukkit.getServer().broadcastMessage(game + " " + id + " " + task_ids.size());
         }
     }
 }
