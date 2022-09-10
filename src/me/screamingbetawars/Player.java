@@ -2,29 +2,17 @@ package me.screamingbetawars;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
-import org.bukkit.DyeColor;
 import org.bukkit.Location;
-import org.bukkit.entity.Sheep;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
-import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerListener;
 import org.bukkit.event.player.PlayerRespawnEvent;
 
 import java.time.Instant;
+import java.util.EventListener;
 
-public class Player extends PlayerListener implements Listener {
-    public void onPlayerInteract(PlayerInteractEntityEvent event) {
-        if(Game.joined_players.containsKey(event.getPlayer().getName())) {
-            if(event.getRightClicked() instanceof Sheep) {
-                if(((Sheep) event.getRightClicked()).getColor().equals(DyeColor.GRAY)) {
-                    if (Game.npcs.containsKey((Sheep) event.getRightClicked())) openShop(event.getPlayer());
-                }
-            }
-        }
-    }
-
+public class Player extends PlayerListener implements Listener, EventListener {
     public void onPlayerUse(PlayerInteractEvent event) {
         for (String map : ConfigManager.map_cache.keySet()) {
             if(ConfigManager.cfg.check(map, true, false).equals("true")) {
@@ -52,9 +40,5 @@ public class Player extends PlayerListener implements Listener {
                 }, 0L, 20L);
             }
         }
-    }
-
-    public static void openShop(org.bukkit.entity.Player player) {
-        player.sendMessage("test");
     }
 }
