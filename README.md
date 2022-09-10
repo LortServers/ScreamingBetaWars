@@ -29,4 +29,4 @@ Well, like I said previously, it's for Beta 1.7.3. If you want to code, you have
 
 Alternatively for newer versions, you can try to replace deprecated functions, and it should work as well.
 
-**Note that project was made using Java 8, and may not work on Java 7.**
+**Note that project was made using Java 8, and may not work on Java 6/7.**
