@@ -8,6 +8,7 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
+import org.bukkit.event.EventException;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -16,6 +17,11 @@ import me.screamingbetawars.Game.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+import java.lang.reflect.Method;
 import java.util.*;
 
 public class Main extends JavaPlugin implements CommandExecutor, Listener, EventListener {
@@ -25,13 +31,10 @@ public class Main extends JavaPlugin implements CommandExecutor, Listener, Event
     public void onEnable() {
         instance = this;
         Bukkit.getLogger().info("ScreamingBetaWars is starting...");
-        Bukkit.getPluginManager().registerEvent(Event.Type.BLOCK_BREAK, new Block(), Event.Priority.Highest, this);
-        Bukkit.getPluginManager().registerEvent(Event.Type.BLOCK_PLACE, new Block(), Event.Priority.Highest, this);
-        Bukkit.getPluginManager().registerEvent(Event.Type.BLOCK_BURN, new Block(), Event.Priority.Highest, this);
-        Bukkit.getPluginManager().registerEvent(Event.Type.ENTITY_DEATH, new Death(), Event.Priority.Highest, this);
-        Bukkit.getPluginManager().registerEvent(Event.Type.PLAYER_INTERACT, new me.screamingbetawars.Player(), Event.Priority.Highest, this);
-        Bukkit.getPluginManager().registerEvent(Event.Type.PLAYER_INTERACT_ENTITY, new me.screamingbetawars.Entity(), Event.Priority.Normal, this);
-        Bukkit.getPluginManager().registerEvent(Event.Type.PLAYER_RESPAWN, new me.screamingbetawars.Player(), Event.Priority.Highest, this);
+        registerEvents(new me.screamingbetawars.Block(), this);
+        registerEvents(new me.screamingbetawars.Death(), this);
+        registerEvents(new me.screamingbetawars.Player(), this);
+        registerEvents(new me.screamingbetawars.Entity(), this);
         this.getCommand("bw").setExecutor(this);
         cfg.update();
         File file = new File(Bukkit.getServer().getPluginManager().getPlugin("ScreamingBetaWars").getDataFolder(), "config.yml");
@@ -251,6 +254,45 @@ public class Main extends JavaPlugin implements CommandExecutor, Listener, Event
         }
         return true;
     }
+
+    public void registerEvents(Listener listener, Plugin plugin) {
+        for (final Method method : listener.getClass().getDeclaredMethods()) {
+            if (method.isAnnotationPresent(EventHandler.class)) {
+                final EventHandler eventHandler = method.getAnnotation(EventHandler.class);
+                String temp = method.getParameters()[0].getType().getSimpleName();
+                temp = temp.replace("Event", "").replaceFirst(Character.toString(temp.charAt(0)), Character.toString(temp.toLowerCase().charAt(0)));
+                for(Character match : temp.toCharArray()) {
+                    if(Character.isUpperCase(match)) temp = temp.replace(Character.toString(match), "_" + Character.toLowerCase(match));
+                }
+                temp = temp.toUpperCase();
+                Bukkit.getPluginManager().registerEvent(
+                        Event.Type.valueOf(temp),
+                        listener,
+                        (listenerInstance, event) -> {
+                            try {
+                                method.invoke(listenerInstance, event);
+                            } catch (Throwable e) {
+                                try {
+                                    throw new EventException(e);
+                                } catch (EventException ex) {
+                                    throw new RuntimeException(ex);
+                                }
+                            }
+                        },
+                        eventHandler.priority(),
+                        this
+                );
+            }
+        }
+    }
+
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.METHOD)
+    public @interface EventHandler {
+        Event.Priority priority() default Event.Priority.Normal;
+        boolean ignoreCancelled() default false;
+    }
+
     public static class shortcuts {
         public static void syntax(CommandSender sender) {
             sender.sendMessage(ChatColor.RED + "Incorrect syntax!");
