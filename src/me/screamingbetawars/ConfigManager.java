@@ -93,6 +93,7 @@ public class ConfigManager {
 
         public static String create(String arg, CommandSender sender) {
             if(arg.equals("config")) return ChatColor.RED + "You can't name your map \"config\", it's been used by the plugin itself!";
+            if(arg.equals("shop_file")) return ChatColor.RED + "You can't name your map \"shop_file\", it's been used by the plugin itself!";
             if(!map_cache.containsKey(arg)) {
                 try {
                     Bukkit.getServer().getPluginManager().getPlugin("ScreamingBetaWars").getDataFolder().mkdir();
