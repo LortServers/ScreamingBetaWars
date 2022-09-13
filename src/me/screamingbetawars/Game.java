@@ -8,6 +8,7 @@ import me.screamingbetawars.ConfigManager.*;
 
 import org.bukkit.*;
 import org.bukkit.entity.CreatureType;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Sheep;
 import org.bukkit.inventory.ItemStack;
 
@@ -276,8 +277,12 @@ public class Game {
             HashMap<Integer, Map.Entry<String, Location>> npcs_copy = new HashMap<>(npcs);
             for(Map.Entry<Integer, Map.Entry<String, Location>> data : npcs_copy.entrySet()) {
                 try {
-                    if(data.getValue().getKey().equals(game)) data.getValue().getValue().getWorld().getEntities().get(data.getKey()).remove();
-                    npcs.remove(data.getKey());
+                    if(data.getValue().getKey().equals(game)) {
+                        for(Entity e : data.getValue().getValue().getWorld().getEntities()) {
+                            if(e.getEntityId() == data.getKey()) e.remove();
+                        }
+                        npcs.remove(data.getKey());
+                    }
                 } catch(Exception ignored) {}
             }
             games.remove(game);
