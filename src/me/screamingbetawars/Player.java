@@ -8,11 +8,13 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerListener;
 import org.bukkit.event.player.PlayerRespawnEvent;
+import me.screamingbetawars.Main.EventHandler;
 
 import java.time.Instant;
 import java.util.EventListener;
 
 public class Player extends PlayerListener implements Listener, EventListener {
+    @EventHandler
     public void onPlayerUse(PlayerInteractEvent event) {
         for (String map : ConfigManager.map_cache.keySet()) {
             if(ConfigManager.cfg.check(map, true, false).equals("true")) {
@@ -25,6 +27,7 @@ public class Player extends PlayerListener implements Listener, EventListener {
         }
     }
 
+    @EventHandler
     public void onRespawn(PlayerRespawnEvent event) {
         if(Game.joined_players.containsKey(event.getPlayer().getName())) {
             if(Death.time.get(event.getPlayer().getName()) >= Instant.now().getEpochSecond()) event.getPlayer().teleport((Location) Game.game.getTeams(Game.joined_players.get(event.getPlayer().getName())).get(Game.game.getPlayerTeam(Game.joined_players.get(event.getPlayer().getName()), event.getPlayer().getName())).get("spawn"));
