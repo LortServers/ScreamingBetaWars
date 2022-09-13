@@ -14,6 +14,7 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import me.screamingbetawars.ConfigManager.*;
 import me.screamingbetawars.Game.*;
+import org.bukkit.scheduler.BukkitWorker;
 
 import java.io.File;
 import java.io.IOException;
@@ -50,15 +51,34 @@ public class Main extends JavaPlugin implements CommandExecutor, Listener, Event
             cfg.put("config", "respawn-time", "5");
             cfg.put("config", "debug", "false");
         }
+        File file2 = new File(Bukkit.getServer().getPluginManager().getPlugin("ScreamingBetaWars").getDataFolder(), "shop_file.yml");
+        if(!cfg.check("shop_file", true).equals("true")) {
+            try {
+                Bukkit.getServer().getPluginManager().getPlugin("ScreamingBetaWars").getDataFolder().mkdir();
+                file2.createNewFile();
+                ConfigManager.map_cache.put("shop_file", new HashMap<>());
+            } catch (IOException ignored) {}
+        }
+        if(cfg.get("shop_file", "slot-1") == null) {
+            cfg.put("shop_file", "slot-1", "BOW;1;GOLD_INGOT;10;");
+            cfg.put("shop_file", "slot-2", "IRON_SWORD;1;GOLD_INGOT;5;");
+            cfg.put("shop_file", "slot-3", "WOOL;15;IRON_INGOT;5;");
+            cfg.put("shop_file", "slot-4", "WOOD;10;GOLD_INGOT;5;");
+            cfg.put("shop_file", "slot-5", "BOW;1;GOLD_INGOT;10;");
+            cfg.put("shop_file", "slot-6", "BOW;1;GOLD_INGOT;10;");
+            cfg.put("shop_file", "slot-7", "BOW;1;GOLD_INGOT;10;");
+            cfg.put("shop_file", "slot-8", "BOW;1;GOLD_INGOT;10;");
+            cfg.put("shop_file", "slot-9", "BOW;1;GOLD_INGOT;10;");
+        }
     }
+
     @Override
     public void onDisable() {
-        Bukkit.getLogger().info("ScreamingBetaWars is shutting down...");
-        HashMap<Integer, String> task_copy = new HashMap<>(Game.task_ids);
-        for(Map.Entry<Integer, String> data : task_copy.entrySet()) {
-            Bukkit.getScheduler().cancelTask(data.getKey());
-            Game.task_ids.remove(data.getKey());
+        for(BukkitWorker test : Bukkit.getScheduler().getActiveWorkers()) {
+            if(test.getOwner() == this) Bukkit.getScheduler().cancelTask(test.getTaskId());
         }
+        Game.task_ids.clear();
+        Bukkit.getLogger().info("ScreamingBetaWars is shutting down...");
     }
 
     @Override
@@ -280,7 +300,7 @@ public class Main extends JavaPlugin implements CommandExecutor, Listener, Event
                             }
                         },
                         eventHandler.priority(),
-                        this
+                        plugin
                 );
             }
         }
