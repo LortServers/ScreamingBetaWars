@@ -6,6 +6,7 @@ import org.bukkit.Location;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.*;
 import me.screamingbetawars.ConfigManager.*;
+import me.screamingbetawars.Main.EventHandler;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -26,6 +27,7 @@ public class Block extends BlockListener implements Listener {
         }
     }
 
+    @EventHandler
     public void onBlockBreak(BlockBreakEvent event) {
         for (String map : ConfigManager.map_cache.keySet()) {
             if (cfg.check(map, true, false).equals("true")) {
@@ -69,6 +71,7 @@ public class Block extends BlockListener implements Listener {
         }
     }
 
+    @EventHandler
     public void onBlockPlace(BlockPlaceEvent event) {
         for (String map : ConfigManager.map_cache.keySet()) {
             if (!map.equals("config.yml")) {
@@ -87,6 +90,7 @@ public class Block extends BlockListener implements Listener {
         }
     }
 
+    @EventHandler
     public void onBlockBurn(BlockBurnEvent event) {
         for (String map : ConfigManager.map_cache.keySet()) {
             if(cfg.check(map, true, false).equals("true")) {
