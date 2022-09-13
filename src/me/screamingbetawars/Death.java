@@ -4,6 +4,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.EntityListener;
+import me.screamingbetawars.Main.EventHandler;
 
 import java.time.Instant;
 import java.util.Map;
@@ -12,6 +13,7 @@ public class Death extends EntityListener implements Listener {
 
     public static Map<String, Integer> time;
 
+    @EventHandler
     public void onKill(EntityDeathEvent event) {
         if(event.getEntity() instanceof Player) {
             if(Game.joined_players.containsKey(((Player) event.getEntity()).getName())) {
