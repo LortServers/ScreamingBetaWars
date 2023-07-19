@@ -34,10 +34,10 @@ public class Block extends BlockListener implements Listener {
                 Location pos1 = cfg.getLocation(map, "pos1");
                 Location pos2 = cfg.getLocation(map, "pos2");
                 if(pos.check(pos1, pos2, event.getBlock().getLocation()) == 3) {
-                    if(Game.joined_players.containsKey(event.getPlayer().getName())) {
-                        if (Game.joined_players.get(event.getPlayer().getName()).equals(map)) {
+                    if(Game.game.isPlayerPlaying(event.getPlayer().getName())) {
+                        if(Game.game.getPlayerMap(event.getPlayer().getName()).equals(map)) {
                             ArrayList<Location> locations = new ArrayList<>();
-                            for (Map<String, Object> entry : Game.game.getTeams(Game.joined_players.get(event.getPlayer().getName())).values()) {
+                            for (Map<String, Object> entry : Game.game.getTeams(map).values()) {
                                 locations.add((Location) entry.get("bed1"));
                                 locations.add((Location) entry.get("bed2"));
                             }
@@ -45,17 +45,18 @@ public class Block extends BlockListener implements Listener {
                             for (Location bed : locations) {
                                 if (bed.distance(event.getBlock().getLocation()) == 0) {
                                     check = true;
-                                    for (Map.Entry<String, Map<String, Object>> entry : Game.game.getTeams(Game.joined_players.get(event.getPlayer().getName())).entrySet()) {
-                                        if ((event.getBlock().getLocation().getBlockX() == ((Location) entry.getValue().get("bed1")).getBlockX()) && (event.getBlock().getLocation().getBlockY() == ((Location) entry.getValue().get("bed1")).getBlockY()) && (event.getBlock().getLocation().getBlockZ() == ((Location) entry.getValue().get("bed1")).getBlockZ())) {
-                                            if (Game.destroyed_beds.get(entry.getKey()) != null) return;
-                                            Game.destroyed_beds.put(entry.getKey(), map);
-                                            Map<String, String> list2 = Game.game.getWithValue(Game.joined_players, map);
-                                            for (String player : list2.keySet()) Bukkit.getPlayer(player).sendMessage(ChatColor.AQUA + "Player " + event.getPlayer().getName() + " has destroyed the bed of team \"" + entry.getKey() + "\".");
-                                        } else if ((event.getBlock().getLocation().getBlockX() == ((Location) entry.getValue().get("bed2")).getBlockX()) && (event.getBlock().getLocation().getBlockY() == ((Location) entry.getValue().get("bed2")).getBlockY()) && (event.getBlock().getLocation().getBlockZ() == ((Location) entry.getValue().get("bed2")).getBlockZ())) {
-                                            if (Game.destroyed_beds.get(entry.getKey()) != null) return;
-                                            Game.destroyed_beds.put(entry.getKey(), map);
-                                            Map<String, String> list2 = Game.game.getWithValue(Game.joined_players, map);
-                                            for (String player : list2.keySet()) Bukkit.getPlayer(player).sendMessage(ChatColor.AQUA + "Player " + event.getPlayer().getName() + " has destroyed the bed of team \"" + entry.getKey() + "\".");
+                                    Game.BWGame game2 = Game.game.getGame(map);
+                                    for (Map.Entry<String, Map<String, Object>> entry : Game.game.getTeams(map).entrySet()) {
+                                        if (((event.getBlock().getLocation().getBlockX() == ((Location) entry.getValue().get("bed1")).getBlockX()) && (event.getBlock().getLocation().getBlockY() == ((Location) entry.getValue().get("bed1")).getBlockY()) && (event.getBlock().getLocation().getBlockZ() == ((Location) entry.getValue().get("bed1")).getBlockZ())) || ((event.getBlock().getLocation().getBlockX() == ((Location) entry.getValue().get("bed2")).getBlockX()) && (event.getBlock().getLocation().getBlockY() == ((Location) entry.getValue().get("bed2")).getBlockY()) && (event.getBlock().getLocation().getBlockZ() == ((Location) entry.getValue().get("bed2")).getBlockZ()))) {
+                                            if(Game.game.getPlayerTeam(event.getPlayer().getName()).equals(entry.getKey())) {
+                                                event.getPlayer().sendMessage(ChatColor.RED + "You can't destroy your own bed!");
+                                                event.setCancelled(true);
+                                                return;
+                                            }
+                                            if(game2.destroyed_beds.contains(entry.getKey())) return;
+                                            game2.destroyed_beds.add(entry.getKey());
+                                            for(String player : game2.joined_players) Bukkit.getPlayer(player).sendMessage(ChatColor.AQUA + "Player " + event.getPlayer().getName() + " has destroyed the bed of team \"" + entry.getKey() + "\".");
+                                            game2.destroyed_beds.add(entry.getKey());
                                         }
                                     }
                                     break;
@@ -79,8 +80,8 @@ public class Block extends BlockListener implements Listener {
                     Location pos1 = cfg.getLocation(map, "pos1");
                     Location pos2 = cfg.getLocation(map, "pos2");
                     if(pos.check(pos1, pos2, event.getBlock().getLocation()) == 3) {
-                        if(Game.joined_players.containsKey(event.getPlayer().getName())) {
-                            if (Game.joined_players.get(event.getPlayer().getName()).equals(map)) {
+                        if(Game.game.isPlayerPlaying(event.getPlayer().getName())) {
+                            if (Game.game.getPlayerMap(event.getPlayer().getName()).equals(map)) {
                                 blocks.put(map, event.getBlock().getLocation());
                             } else event.setCancelled(true);
                         } else event.setCancelled(true);
