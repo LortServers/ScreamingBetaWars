@@ -77,7 +77,7 @@ public class Main extends JavaPlugin implements CommandExecutor, Listener, Event
         for(BukkitWorker test : Bukkit.getScheduler().getActiveWorkers()) {
             if(test.getOwner() == this) Bukkit.getScheduler().cancelTask(test.getTaskId());
         }
-        Game.task_ids.clear();
+        Game.games.clear();
         Bukkit.getLogger().info("ScreamingBetaWars is shutting down...");
     }
 
@@ -285,23 +285,25 @@ public class Main extends JavaPlugin implements CommandExecutor, Listener, Event
                     if(Character.isUpperCase(match)) temp = temp.replace(Character.toString(match), "_" + Character.toLowerCase(match));
                 }
                 temp = temp.toUpperCase();
-                Bukkit.getPluginManager().registerEvent(
-                        Event.Type.valueOf(temp),
-                        listener,
-                        (listenerInstance, event) -> {
-                            try {
-                                method.invoke(listenerInstance, event);
-                            } catch (Throwable e) {
+                try {
+                    Bukkit.getPluginManager().registerEvent(
+                            Event.Type.valueOf(temp),
+                            listener,
+                            (listenerInstance, event) -> {
                                 try {
-                                    throw new EventException(e);
-                                } catch (EventException ex) {
-                                    throw new RuntimeException(ex);
+                                    method.invoke(listenerInstance, event);
+                                } catch (Throwable e) {
+                                    try {
+                                        throw new EventException(e);
+                                    } catch (EventException ex) {
+                                        throw new RuntimeException(ex);
+                                    }
                                 }
-                            }
-                        },
-                        eventHandler.priority(),
-                        plugin
-                );
+                            },
+                            eventHandler.priority(),
+                            plugin
+                    );
+                } catch(IllegalArgumentException ignored) {}
             }
         }
     }
