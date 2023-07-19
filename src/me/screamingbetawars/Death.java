@@ -1,5 +1,6 @@
 package me.screamingbetawars;
 
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDeathEvent;
@@ -16,11 +17,13 @@ public class Death extends EntityListener implements Listener {
     @EventHandler
     public void onKill(EntityDeathEvent event) {
         if(event.getEntity() instanceof Player) {
-            if(Game.joined_players.containsKey(((Player) event.getEntity()).getName())) {
-                if(!Game.destroyed_beds.containsKey(Game.game.getPlayerTeam(Game.joined_players.get(((Player) event.getEntity()).getName()), ((Player) event.getEntity()).getName()))) {
+            if(Game.game.isPlayerPlaying(((Player) event.getEntity()).getName())) {
+                Bukkit.broadcastMessage("test");
+                Game.BWGame game2 = Game.game.getGame(Game.game.getPlayerMap(((Player) event.getEntity()).getName()));
+                if(!game2.destroyed_beds.contains(Game.game.getPlayerTeam(((Player) event.getEntity()).getName()))) {
                     time.put(((Player) event.getEntity()).getName(), (int) Instant.now().getEpochSecond() + ConfigManager.cfg.getInt("config", "respawn-time"));
                 } else Game.game.leaveGame(((Player) event.getEntity()).getName());
-            }
+            } else Bukkit.broadcastMessage(((Player) event.getEntity()).getName());
         }
     }
 }
