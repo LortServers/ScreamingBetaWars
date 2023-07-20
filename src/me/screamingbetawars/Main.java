@@ -70,6 +70,9 @@ public class Main extends JavaPlugin implements CommandExecutor, Listener, Event
             cfg.put("shop_file", "slot-8", "BOW;1;GOLD_INGOT;10;");
             cfg.put("shop_file", "slot-9", "BOW;1;GOLD_INGOT;10;");
         }
+        for(Player player : getServer().getOnlinePlayers()) {
+            try { me.screamingbetawars.Player.playerOverride(player); } catch(NoSuchFieldException | IllegalAccessException ignored) {}
+        }
     }
 
     @Override
@@ -127,6 +130,11 @@ public class Main extends JavaPlugin implements CommandExecutor, Listener, Event
                 if(args[2].equals("create")) sender.sendMessage(cfg.create(args[1], sender));
                 else if(args[2].equals("edit")) {
                     if(cfg.check(args[1], true, false).equals("true")) {
+                        if(Game.game.getGame(args[1]).started) {
+                            sender.sendMessage(ChatColor.RED + "You cannot change the map state after the game has started!");
+                            return true;
+                        }
+                        Game.game.endGame(args[1]);
                         cfg.put(args[1], "edit", "true");
                         sender.sendMessage(ChatColor.AQUA + "Map status has been set to edit state.");
                     } else sender.sendMessage(ChatColor.RED + "Map is already in edit state!");
@@ -217,7 +225,7 @@ public class Main extends JavaPlugin implements CommandExecutor, Listener, Event
                             } else sender.sendMessage(ChatColor.RED + "Team does not exist.");
                         } else if(args[3].equals("shop")) {
                             if (cfg.find(args[1], "team-" + args[4])) {
-                                cfg.putLocation(args[1], "villager-?-team-" + args[4], player.getName());
+                                cfg.putLocationExact(args[1], "villager-?-team-" + args[4], player.getName());
                                 cfg.put(args[1], "villager-yaw-team-" + args[4], String.valueOf(player.getLocation().getYaw()));
                                 cfg.put(args[1], "villager-pitch-team-" + args[4], String.valueOf(player.getLocation().getPitch()));
                                 sender.sendMessage(ChatColor.AQUA + "Shop position for team \"" + args[4] + "\" is set.");
@@ -238,8 +246,8 @@ public class Main extends JavaPlugin implements CommandExecutor, Listener, Event
                                 shortcuts.custom(sender, "Incorrect amount of seconds!");
                                 return false;
                             }
-                            int spawner = cfg.getInt(args[1], "spawners");
-                            cfg.putLocation(args[1], "spawner-?-" + spawner, player.getName());
+                            int spawner = Integer.parseInt(cfg.get(args[1], "spawners"));
+                            cfg.putLocationExact(args[1], "spawner-?-" + spawner, player.getName());
                             cfg.put(args[1], "spawner-type-" + spawner, args[3].toUpperCase());
                             cfg.put(args[1], "spawner-time-" + spawner, args[4]);
                             cfg.put(args[1], "spawners", spawner + 1);
