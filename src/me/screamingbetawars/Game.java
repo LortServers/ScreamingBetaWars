@@ -1,5 +1,6 @@
 package me.screamingbetawars;
 
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -7,20 +8,39 @@ import java.util.concurrent.atomic.AtomicInteger;
 import me.screamingbetawars.ConfigManager.*;
 
 import org.bukkit.*;
+import org.bukkit.block.BlockState;
 import org.bukkit.entity.CreatureType;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.Item;
+import org.bukkit.entity.Player;
 import org.bukkit.entity.Sheep;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.PlayerInventory;
+import org.bukkit.material.MaterialData;
 
 public class Game {
     static class BWGame {
         public static boolean started = false;
         public static ArrayList<String> joined_players = new ArrayList<>();
         static HashMap<String, String> teams = new HashMap<>();
-        static HashMap<Material, Location> beds = new HashMap<>();
+        static HashMap<MaterialData, Location> beds = new HashMap<>();
         public static HashMap<Integer, Location> npcs = new HashMap<>();
         public static ArrayList<String> destroyed_beds = new ArrayList<>();
         public static ArrayList<Integer> task_ids = new ArrayList<>();
+        public static ArrayList<Item> items = new ArrayList<>();
+        public static HashMap<String, HashMap<ItemStack[], ItemStack[]>> player_inventories = new HashMap<>();
+        public void reset() {
+            started = false;
+            joined_players = new ArrayList<>();
+            teams = new HashMap<>();
+            beds = new HashMap<>();
+            npcs = new HashMap<>();
+            destroyed_beds = new ArrayList<>();
+            task_ids = new ArrayList<>();
+            items = new ArrayList<>();
+            player_inventories = new HashMap<>();
+        }
     }
     static HashMap<String, BWGame> games = new HashMap<>();
     public static class game {
@@ -34,6 +54,11 @@ public class Game {
                 if(!game2.started) game2.joined_players.add(nick);
                 else return ChatColor.RED + "This game has already started!";
             } else return ChatColor.RED + "You are already in a game!";
+            HashMap<ItemStack[], ItemStack[]> player_inventory = new HashMap<>();
+            player_inventory.put(Bukkit.getPlayer(nick).getInventory().getContents(), Bukkit.getPlayer(nick).getInventory().getArmorContents());
+            game2.player_inventories.put(nick, player_inventory);
+            Bukkit.getPlayer(nick).getInventory().setArmorContents(new ItemStack[Bukkit.getPlayer(nick).getInventory().getArmorContents().length]);
+            Bukkit.getPlayer(nick).getInventory().clear();
             Bukkit.getPlayer(nick).teleport(cfg.getLocation(game, "lobby-"));
             Bukkit.getPlayer(nick).sendMessage(ChatColor.AQUA + "You've successfully joined a map!");
             int size = 0;
@@ -42,7 +67,9 @@ public class Game {
             for(String player : game2.joined_players) Bukkit.getPlayer(player).sendMessage(ChatColor.AQUA + "Player " + nick + " has joined the map (" + game2.joined_players.size() + "/" + size + ")!");
             Map<String, Map<String, Object>> game_teams = new HashMap<>(getTeams(game));
             for (Map.Entry<String, Map<String, Object>> entry : getTeams(game).entrySet()) {
-                if(Integer.parseInt((String) entry.getValue().get("size")) == game2.joined_players.size()) game_teams.remove(entry.getKey(), entry.getValue());
+                Collection<String> team = game2.teams.values();
+                for(String team2 : game2.teams.values()) { if(!team2.equals(entry.getKey())) team.remove(entry.getKey()); }
+                if(Integer.parseInt((String) entry.getValue().get("size")) == team.size()) game_teams.remove(entry.getKey(), entry.getValue());
             }
             String teams = "";
             boolean check = false;
@@ -67,8 +94,8 @@ public class Game {
                 current_team.put("size", cfg.get(game, "size-team-" + team));
                 Location bed1 = new Location(Bukkit.getServer().getWorld(cfg.get(game, "world")), cfg.getInt(game, "x1-bed-team-" + team), cfg.getInt(game, "y1-bed-team-" + team), cfg.getInt(game, "z1-bed-team-" + team));
                 Location bed2 = new Location(Bukkit.getServer().getWorld(cfg.get(game, "world")), cfg.getInt(game, "x2-bed-team-" + team), cfg.getInt(game, "y2-bed-team-" + team), cfg.getInt(game, "z2-bed-team-" + team));
-                Location villager = new Location(Bukkit.getServer().getWorld(cfg.get(game, "world")), cfg.getInt(game, "villager-x-team-" + team), cfg.getInt(game, "villager-y-team-" + team), cfg.getInt(game, "villager-z-team-" + team), Float.parseFloat(cfg.get(game, "villager-yaw-team-" + team)), Float.parseFloat(cfg.get(game, "villager-pitch-team-" + team)));
-                Location spawn = new Location(Bukkit.getServer().getWorld(cfg.get(game, "world")), cfg.getInt(game, "x-spawn-team-" + team), cfg.getInt(game, "y-spawn-team-" + team), cfg.getInt(game, "z-spawn-team-" + team));
+                Location villager = new Location(Bukkit.getServer().getWorld(cfg.get(game, "world")), cfg.getDouble(game, "villager-x-team-" + team), cfg.getDouble(game, "villager-y-team-" + team), cfg.getDouble(game, "villager-z-team-" + team), Float.parseFloat(cfg.get(game, "villager-yaw-team-" + team)), Float.parseFloat(cfg.get(game, "villager-pitch-team-" + team)));
+                Location spawn = new Location(Bukkit.getServer().getWorld(cfg.get(game, "world")), cfg.getDouble(game, "x-spawn-team-" + team), cfg.getDouble(game, "y-spawn-team-" + team), cfg.getDouble(game, "z-spawn-team-" + team));
                 current_team.put("bed1", bed1);
                 current_team.put("bed2", bed2);
                 current_team.put("villager", villager);
@@ -121,6 +148,7 @@ public class Game {
         public static String joinTeam(String nick, String team) {
             String game = getPlayerMap(nick);
             BWGame game2 = getGame(game);
+            if(game2.started) return ChatColor.RED + "You cannot change your team after the game has started!";
             if(game2.joined_players.contains(nick)) {
                 if (getTeams(game).containsKey(team)) {
                     int count = 0;
@@ -143,6 +171,7 @@ public class Game {
         public static String leaveTeam(String nick) {
             String game = getPlayerMap(nick);
             BWGame game2 = getGame(game);
+            if(game2.started) return ChatColor.RED + "You cannot change your team after the game has started!";
             if(game2.teams.containsKey(nick)) {
                 game2.teams.remove(nick);
                 return ChatColor.AQUA + "Successfully left the team!";
@@ -150,16 +179,18 @@ public class Game {
         }
 
         public static String leaveGame(String nick) {
+            if(!Game.game.isPlayerPlaying(nick)) return ChatColor.RED + "You are not playing!";
             String game = getPlayerMap(nick);
             BWGame game2 = getGame(game);
-            if (!game2.joined_players.contains(nick)) return ChatColor.RED + "You are not playing!";
+            //if(!game2.joined_players.contains(nick)) return ChatColor.RED + "You are not playing!";
+            Bukkit.getPlayer(nick).getInventory().clear();
             game2.joined_players.remove(nick);
             game2.teams.remove(nick);
             int size = 0;
             for(Map<String, Object> team : getTeams(game).values()) size += Integer.parseInt(String.valueOf(team.get("size")));
             for(String player : game2.joined_players) Bukkit.getPlayer(player).sendMessage(ChatColor.AQUA + "Player " + nick + " has left the map (" + game2.joined_players.size() + "/" + size + ")!");
             String random_team = "";
-            if(game2.joined_players.size() > 0) {
+            /*if(game2.joined_players.size() > 0) {
                 for (String team : game2.joined_players) {
                     random_team = team;
                     break;
@@ -170,13 +201,18 @@ public class Game {
                         endGame(game);
                     }
                 }
-            }
+            } else*/
             if(cfg.getLocation("config", "spawn-") != null) {
                 Location spawn = cfg.getLocation("config", "spawn-");
-                spawn.setYaw(Float.valueOf(cfg.get("config", "spawn-yaw")));
-                spawn.setPitch(Float.valueOf(cfg.get("config", "spawn-pitch")));
+                spawn.setYaw(Float.parseFloat(cfg.get("config", "spawn-yaw")));
+                spawn.setPitch(Float.parseFloat(cfg.get("config", "spawn-pitch")));
                 Bukkit.getPlayer(nick).teleport(spawn);
             } else Bukkit.getPlayer(nick).teleport(Bukkit.getPlayer(nick).getWorld().getSpawnLocation());
+            Map.Entry<ItemStack[], ItemStack[]> player_inventory = game2.player_inventories.get(nick).entrySet().stream().findFirst().get();
+            Bukkit.getPlayer(nick).getInventory().setContents(player_inventory.getKey());
+            Bukkit.getPlayer(nick).getInventory().setArmorContents(player_inventory.getValue());
+            game2.player_inventories.remove(nick);
+            Game.game.stopIfEmpty(game2, game);
             return ChatColor.AQUA + "You've left a map!";
         }
 
@@ -220,7 +256,6 @@ public class Game {
 
         public static void startGame(String game) {
             BWGame game2 = getGame(game);
-            game2.started = true;
             Map<String, Map<String, Object>> map_teams = getTeams(game);
             if(game2.teams.size() != game2.joined_players.size()) {
                 Map<String, String> game_teams = new HashMap<>();
@@ -229,7 +264,6 @@ public class Game {
                 }
                 for(String player : game2.joined_players) {
                     if(!game2.teams.containsKey(player)) {
-                        Bukkit.getLogger().info("test");
                         for(Map.Entry<String, String> team : game_teams.entrySet()) {
                             int count = 0;
                             for(Map.Entry<String, String> team_count : game2.teams.entrySet()) {
@@ -245,11 +279,10 @@ public class Game {
                         }
                     }
                 }
-                Bukkit.getLogger().info(getPlayerTeam("Lort533"));
             }
             for(Map<String, Object> entry : getTeams(game).values()) {
-                game2.beds.put(((Location) entry.get("bed1")).getBlock().getType(), (Location) entry.get("bed1"));
-                game2.beds.put(((Location) entry.get("bed2")).getBlock().getType(), (Location) entry.get("bed2"));
+                game2.beds.put(((Location) entry.get("bed1")).getBlock().getState().getData(), (Location) entry.get("bed1"));
+                game2.beds.put(((Location) entry.get("bed2")).getBlock().getState().getData(), (Location) entry.get("bed2"));
             }
             for(String player : game2.joined_players) {
                 Bukkit.getPlayer(player).teleport((Location) getTeams(game).get(getPlayerTeam(player)).get("spawn"));
@@ -258,22 +291,28 @@ public class Game {
             for(Map.Entry<String, Map<String, Object>> spawner : getSpawners(game).entrySet()) {
                 int id = Bukkit.getServer().getScheduler().scheduleAsyncRepeatingTask(new Main(), new Runnable() {
                     public void run() {
-                        if(getGame(game) == null) return;
-                        Bukkit.getWorld(cfg.get(game, "world")).dropItem((Location) spawner.getValue().get("location"), new ItemStack(Material.getMaterial(String.valueOf(spawner.getValue().get("type"))), 1));
+                        BWGame game2 = getGame(game);
+                        if(game2 == null) return;
+                        game2.items.add(Bukkit.getWorld(cfg.get(game, "world")).dropItem((Location) spawner.getValue().get("location"), new ItemStack(Material.getMaterial(String.valueOf(spawner.getValue().get("type"))), 1)));
                     }
                 }, 0L, Integer.parseInt(String.valueOf(spawner.getValue().get("time"))) * 20L);
                 game2.task_ids.add(id);
             }
+            Block.blocks.put(game, new ArrayList<>());
+            game2.started = true;
         }
 
         public static String endGame(String game) {
             BWGame game2 = getGame(game);
             if(game2 == null) return ChatColor.RED + "The given map is not running!";
-            for(Map.Entry<String, Location> blocks : Block.blocks.entrySet()) {
-                if(blocks.getKey().equals(game)) blocks.getValue().getBlock().setType(Material.AIR);
+            for(Map.Entry<String, ArrayList<Location>> blocks : Block.blocks.entrySet()) {
+                if(blocks.getKey().equals(game)) {
+                    for(Location location : blocks.getValue()) location.getBlock().setType(Material.AIR);
+                }
             }
-            for(Map.Entry<Material, Location> bed : game2.beds.entrySet()) {
-                Bukkit.getWorld(cfg.get(game, "world")).getBlockAt(bed.getValue()).setType(bed.getKey());
+            for(Map.Entry<MaterialData, Location> bed : game2.beds.entrySet()) {
+                //Bukkit.getWorld(cfg.get(game, "world")).getBlockAt(bed.getValue()).setType(bed.getKey());
+                Bukkit.getWorld(cfg.get(game, "world")).getBlockAt(bed.getValue()).setTypeIdAndData(bed.getKey().getItemTypeId(), bed.getKey().getData(), false);
             }
             ArrayList<String> joined_players_copy = new ArrayList<>(game2.joined_players);
             for(String player : joined_players_copy) leaveGame(player);
@@ -291,8 +330,12 @@ public class Game {
                     game2.npcs.remove(data.getKey());
                 } catch(Exception ignored) {}
             }
-            game2.destroyed_beds.clear();
-            game2.started = false;
+            ArrayList<Item> items_copy = new ArrayList<>(game2.items);
+            for(Item item : items_copy) {
+                item.remove();
+                game2.items.remove(item);
+            }
+            game2.reset();
             games.remove(game);
             return ChatColor.AQUA + "Map has been stopped successfully.";
         }
@@ -318,7 +361,9 @@ public class Game {
         }
         public static String getPlayerMap(String nick) {
             for(Map.Entry<String, BWGame> data : games.entrySet()) {
-                if(data.getValue().joined_players.contains(nick)) return data.getKey();
+                if(data.getValue().joined_players.contains(nick)) {
+                    return data.getKey();
+                }
             }
             return null;
         }
@@ -327,6 +372,20 @@ public class Game {
                 if(data.getValue().npcs.containsKey(id)) return true;
             }
             return false;
+        }
+
+        public static boolean stopIfEmpty(BWGame game2, String game) {
+            if(game2.joined_players.size() > 0) {
+                String team = null;
+                for (String nick : game2.joined_players) {
+                    String player_team = Game.game.getPlayerTeam(nick);
+                    if(team == null) team = player_team;
+                    else if(!team.equals(player_team)) return false;
+                }
+                for(String player : game2.joined_players) Bukkit.getPlayer(player).sendMessage(ChatColor.AQUA + "Team \"" + team + "\" won!");
+            }
+            Game.game.endGame(game);
+            return true;
         }
     }
 }
