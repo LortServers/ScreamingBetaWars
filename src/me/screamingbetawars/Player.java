@@ -18,6 +18,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EventListener;
+import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -36,27 +37,62 @@ public class Player extends PlayerListener implements Listener, EventListener {
         }
     }*/
 
+    HashMap<String, Integer> respawn_run_ids = new HashMap<>();
+
     @EventHandler
     public void onRespawn(PlayerRespawnEvent event) {
-        if(Game.game.isPlayerPlaying(event.getPlayer().getName())) {
-            String game = Game.game.getPlayerMap(event.getPlayer().getName());
-            if(Death.time.get(event.getPlayer().getName()) >= Instant.now().getEpochSecond()) event.getPlayer().teleport((Location) Game.game.getTeams(game).get(Game.game.getPlayerTeam(event.getPlayer().getName())).get("spawn"));
+        String nick = event.getPlayer().getName();
+        if(Game.game.isPlayerPlaying(nick)) {
+            String game = Game.game.getPlayerMap(nick);
+            if(Death.time.get(nick) <= Instant.now().getEpochSecond()) event.setRespawnLocation((Location) Game.game.getTeams(game).get(Game.game.getPlayerTeam(nick)).get("spawn"));
             else {
-                event.getPlayer().teleport(ConfigManager.cfg.getLocation(game, "spec-"));
-                Bukkit.getServer().getScheduler().scheduleSyncRepeatingTask(new Main(), new Runnable() {
-                    public void run() {
-                        if(Death.time.get(event.getPlayer().getName()) >= Instant.now().getEpochSecond()) {
-                            event.getPlayer().teleport((Location) Game.game.getTeams(game).get(Game.game.getPlayerTeam(event.getPlayer().getName())).get("spawn"));
-                        } else event.getPlayer().sendMessage(ChatColor.AQUA + "You will respawn in " + (Instant.now().getEpochSecond() - Death.time.get(event.getPlayer().getName())) + " seconds!");
-                    }
-                }, 0L, 20L);
+                event.setRespawnLocation(ConfigManager.cfg.getLocation(game, "spec-"));
+                respawn_run_ids.put(nick,
+                    Bukkit.getServer().getScheduler().scheduleSyncRepeatingTask(new Main(), new Runnable() {
+                        public void run() {
+                            if(Death.time.get(nick) <= Instant.now().getEpochSecond()) {
+                                event.getPlayer().teleport((Location) Game.game.getTeams(game).get(Game.game.getPlayerTeam(nick)).get("spawn"));
+                                removePlayerFromRespawn(nick);
+                            } else event.getPlayer().sendMessage(ChatColor.AQUA + "You will respawn in " + (Death.time.get(nick) - Instant.now().getEpochSecond()) + " seconds!");
+                        }
+                    }, 0L, 20L)
+                );
             }
         }
     }
 
     @EventHandler
     public void onJoin(PlayerJoinEvent event) throws NoSuchFieldException, IllegalAccessException {
-        final NetworkManager mgr = ((CraftPlayer) event.getPlayer()).getHandle().netServerHandler.networkManager;
+        playerOverride(event.getPlayer());
+    }
+
+    @EventHandler
+    public void onPickup(PlayerPickupItemEvent event) {
+        event.getPlayer().updateInventory();
+    }
+
+    public void removePlayerFromRespawn(String nick) {
+        Death.time.remove(nick);
+        Bukkit.getScheduler().cancelTask(respawn_run_ids.get(nick));
+        respawn_run_ids.remove(nick);
+    }
+
+    @EventHandler
+    public void onMessage(PlayerChatEvent event) {
+        String nick = event.getPlayer().getName();
+        if((Game.game.isPlayerPlaying(nick)) && (Game.game.getGame(Game.game.getPlayerMap(nick)).started)) {
+            String team = Game.game.getPlayerTeam(nick), map = Game.game.getPlayerMap(nick);
+            event.setFormat("[" + ChatColor.valueOf((String) Game.game.getTeams(Game.game.getPlayerMap(nick)).get(team).get("color")) + team.toUpperCase() + ChatColor.WHITE + "] <" + nick + "> " + event.getMessage());
+        }
+    }
+
+    @EventHandler
+    public void onPlayerSleep(PlayerBedEnterEvent event) {
+        if(Game.game.isPlayerPlaying(event.getPlayer().getName())) event.setCancelled(true);
+    }
+
+    public static void playerOverride(org.bukkit.entity.Player player) throws NoSuchFieldException, IllegalAccessException {
+        final NetworkManager mgr = ((CraftPlayer) player).getHandle().netServerHandler.networkManager;
         Field field = mgr.getClass().getDeclaredField("m");
         field.setAccessible(true);
         field.set(mgr, Collections.synchronizedList(new ArrayList<Packet>() {
@@ -65,7 +101,7 @@ public class Player extends PlayerListener implements Listener, EventListener {
                 if(p instanceof Packet102WindowClick) {
                     Packet102WindowClick packet = (Packet102WindowClick) p;
                     if(packet.a == 100) {
-                        if(Game.game.isPlayerPlaying(event.getPlayer().getName())) {
+                        if(Game.game.isPlayerPlaying(player.getName())) {
                             if((packet.b >= 0) && (packet.b <= 8)) {
                                 String item = "", item_price = "";
                                 int item_amount = 100, cost = 100;
@@ -80,15 +116,17 @@ public class Player extends PlayerListener implements Listener, EventListener {
                                     iter++;
                                 }
                                 boolean check = false;
-                                org.bukkit.entity.Player player = event.getPlayer();
                                 for(int i = 0; i < 44; i++) {
                                     try {
                                         ItemStack current_item = player.getInventory().getItem(i);
+                                        if(current_item == null) continue;
                                         if (current_item.getTypeId() == Material.valueOf(item_price).getId()) {
                                             if (current_item.getAmount() >= cost) {
-                                                current_item.setAmount(Math.max((current_item.getAmount() - cost), 0));
-                                                player.getInventory().remove(i);
-                                                player.getInventory().setItem(i, current_item);
+                                                player.getInventory().clear(i);
+                                                if(current_item.getAmount() > cost) {
+                                                    current_item.setAmount(current_item.getAmount() - cost);
+                                                    player.getInventory().setItem(i, current_item);
+                                                }
                                                 ItemStack new_item = new ItemStack(Material.valueOf(item));
                                                 new_item.setAmount(item_amount);
                                                 player.updateInventory();
@@ -98,18 +136,18 @@ public class Player extends PlayerListener implements Listener, EventListener {
                                                 break;
                                             }
                                         }
-                                    } catch(ArrayIndexOutOfBoundsException ignored) {}
+                                    } catch (ArrayIndexOutOfBoundsException ignored) {}
                                 }
                                 if (!check) player.sendMessage(ChatColor.RED + "You don't have enough resources!");
                             }
-                        } else event.getPlayer().sendMessage(ChatColor.RED + "You can't do that.");
+                        } else player.sendMessage(ChatColor.RED + "You can't do that.");
                         if((packet.b != -999) && (packet.e != null)) {
-                            event.getPlayer().updateInventory();
+                            player.updateInventory();
                             Packet103SetSlot packet1 = new Packet103SetSlot();
                             packet1.a = packet.a;
                             packet1.b = packet.b;
                             packet1.c = packet.e;
-                            ((CraftPlayer) event.getPlayer()).getHandle().netServerHandler.sendPacket(packet1);
+                            ((CraftPlayer) player).getHandle().netServerHandler.sendPacket(packet1);
                         }
                         return false;
                     }
@@ -118,10 +156,5 @@ public class Player extends PlayerListener implements Listener, EventListener {
                 return true;
             }
         }));
-    }
-
-    @EventHandler
-    public void onPickup(PlayerPickupItemEvent event) {
-        event.getPlayer().updateInventory();
     }
 }
