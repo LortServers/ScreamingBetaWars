@@ -64,9 +64,17 @@ public class ConfigManager {
         }
 
         public static void putLocation(String arg, String key, String nick) {
+            cfg.put(arg, "world", Bukkit.getPlayer(nick).getWorld().getName());
             cfg.put(arg, key.replace("?", "x"), Bukkit.getPlayer(nick).getLocation().getBlockX());
             cfg.put(arg, key.replace("?", "y"), Bukkit.getPlayer(nick).getLocation().getBlockY());
             cfg.put(arg, key.replace("?", "z"), Bukkit.getPlayer(nick).getLocation().getBlockZ());
+        }
+
+        public static void putLocationExact(String arg, String key, String nick) {
+            cfg.put(arg, "world", Bukkit.getPlayer(nick).getWorld().getName());
+            cfg.put(arg, key.replace("?", "x"), Bukkit.getPlayer(nick).getLocation().getX());
+            cfg.put(arg, key.replace("?", "y"), Bukkit.getPlayer(nick).getLocation().getY());
+            cfg.put(arg, key.replace("?", "z"), Bukkit.getPlayer(nick).getLocation().getZ());
         }
 
         public static void remove(String arg, String key) {
@@ -111,11 +119,15 @@ public class ConfigManager {
         }
 
         public static String get(String arg, String key) {
-            return (String) map_cache.get(arg).get(key);
+            return String.valueOf(get(arg).get(key));
         }
 
         public static int getInt(String arg, String key) {
             return (int) map_cache.get(arg).get(key);
+        }
+
+        public static double getDouble(String arg, String key) {
+            return Double.parseDouble(get(arg, key));
         }
 
         public static Map<String, Object> get(String arg) {
