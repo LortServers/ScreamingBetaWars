@@ -8,6 +8,7 @@ import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.*;
+import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -28,9 +29,10 @@ public class ConfigManager {
                 for (File yaml_file : list) {
                     if (!yaml_file.isDirectory()) {
                         try {
-                        Yaml yaml = new Yaml(cfg.getYamlOptions());
-                        InputStream file = new FileInputStream(yaml_file);
-                        map_cache.put(yaml_file.getName().replace(".yml", ""), (Map<String, Object>) yaml.load(file));
+                            Yaml yaml = new Yaml(cfg.getYamlOptions());
+                            InputStream file = Files.newInputStream(yaml_file.toPath());
+                            if(yaml_file.getName().equals("config.yml")) continue;
+                            map_cache.put(yaml_file.getName().replace(".yml", ""), (Map<String, Object>) yaml.load(file));
                         } catch(Exception ignored) {}
                     }
                 }

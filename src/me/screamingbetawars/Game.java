@@ -1,6 +1,5 @@
 package me.screamingbetawars;
 
-import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -8,15 +7,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 import me.screamingbetawars.ConfigManager.*;
 
 import org.bukkit.*;
-import org.bukkit.block.BlockState;
+import org.bukkit.block.Chest;
 import org.bukkit.entity.CreatureType;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Item;
-import org.bukkit.entity.Player;
 import org.bukkit.entity.Sheep;
-import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.material.MaterialData;
 
 public class Game {
@@ -30,6 +26,7 @@ public class Game {
         public static ArrayList<Integer> task_ids = new ArrayList<>();
         public static ArrayList<Item> items = new ArrayList<>();
         public static HashMap<String, HashMap<ItemStack[], ItemStack[]>> player_inventories = new HashMap<>();
+        public static HashMap<Location, ItemStack[]> chests = new HashMap<>();
         public void reset() {
             started = false;
             joined_players = new ArrayList<>();
@@ -40,6 +37,7 @@ public class Game {
             task_ids = new ArrayList<>();
             items = new ArrayList<>();
             player_inventories = new HashMap<>();
+            chests = new HashMap<>();
         }
     }
     static HashMap<String, BWGame> games = new HashMap<>();
@@ -73,7 +71,7 @@ public class Game {
             }
             String teams = "";
             boolean check = false;
-            for (String entry : game_teams.keySet()) {
+            for(String entry : game_teams.keySet()) {
                 if(check) teams += ", " + entry;
                 else {
                     teams += entry;
@@ -106,19 +104,17 @@ public class Game {
         }
 
         public static Map<String, String> getWithKey(Map<String, String> data, String key) {
-            Map<String, String> data2 = data;
-            for(String value : data2.keySet()) {
-                if(!value.startsWith(key)) data2.remove(value);
+            for(String value : data.keySet()) {
+                if(!value.startsWith(key)) data.remove(value);
             }
-            return data2;
+            return data;
         }
 
         public static Map<String, String> getWithValue(Map<String, String> data, String value) {
-            Map<String, String> data2 = data;
-            for(Map.Entry<String, String> data_value : data2.entrySet()) {
-                if(!data_value.getValue().startsWith(value)) data2.remove(data_value.getKey());
+            for(Map.Entry<String, String> data_value : data.entrySet()) {
+                if(!data_value.getValue().startsWith(value)) data.remove(data_value.getKey());
             }
-            return data2;
+            return data;
         }
 
         public static int countWithValue(Map<String, String> data, String value) {
@@ -189,8 +185,8 @@ public class Game {
             int size = 0;
             for(Map<String, Object> team : getTeams(game).values()) size += Integer.parseInt(String.valueOf(team.get("size")));
             for(String player : game2.joined_players) Bukkit.getPlayer(player).sendMessage(ChatColor.AQUA + "Player " + nick + " has left the map (" + game2.joined_players.size() + "/" + size + ")!");
-            String random_team = "";
-            /*if(game2.joined_players.size() > 0) {
+            /*String random_team = "";
+            if(game2.joined_players.size() > 0) {
                 for (String team : game2.joined_players) {
                     random_team = team;
                     break;
@@ -218,27 +214,27 @@ public class Game {
 
         public static void proceedGame(String game) {
             BWGame game2 = getGame(game);
+            if(game2.joined_players.size() != 1) return;
             int size = 0;
-            for(Map<String, Object> team : getTeams(game).values()) size += Integer.valueOf((String) team.get("size"));
+            for(Map<String, Object> team : getTeams(game).values()) size += Integer.parseInt((String) team.get("size"));
             AtomicBoolean start = new AtomicBoolean(false);
             final AtomicInteger count = new AtomicInteger(10);
             int finalSize = size;
-            Bukkit.getServer().getScheduler().scheduleSyncRepeatingTask(new Main(), new Runnable() {
-                public void run() {
-                    if(game2.joined_players.size() > finalSize/2) {
-                        if(count.get() == 0) {
-                            for(String player : game2.joined_players) Bukkit.getPlayer(player).sendMessage(ChatColor.AQUA + "Game has been started!");
-                            startGame(game);
-                            return;
-                        }
-                        for(String player : game2.joined_players) Bukkit.getPlayer(player).sendMessage(ChatColor.AQUA + "Game starts in " + count.get() + " seconds!");
-                        count.set(count.get()-1);
-                        start.set(true);
-                    } else if(start.get()) {
-                        for(String player : game2.joined_players) Bukkit.getPlayer(player).sendMessage(ChatColor.AQUA + "Not enough players, counting has been paused.");
-                        count.set(10);
-                        start.set(false);
+            Bukkit.getServer().getScheduler().scheduleSyncRepeatingTask(new Main(), () -> {
+                if(game2.joined_players.size() > finalSize/2) {
+                    if(count.get() == 0) {
+                        if(game2.started) return;
+                        for(String player : game2.joined_players) Bukkit.getPlayer(player).sendMessage(ChatColor.AQUA + "Game has been started!");
+                        startGame(game);
+                        return;
                     }
+                    for(String player : game2.joined_players) Bukkit.getPlayer(player).sendMessage(ChatColor.AQUA + "Game starts in " + count.get() + " seconds!");
+                    count.set(count.get()-1);
+                    start.set(true);
+                } else if(start.get()) {
+                    for(String player : game2.joined_players) Bukkit.getPlayer(player).sendMessage(ChatColor.AQUA + "Not enough players, counting has been paused.");
+                    count.set(10);
+                    start.set(false);
                 }
             }, 0L, 20L);
         }
@@ -267,15 +263,20 @@ public class Game {
                         for(Map.Entry<String, String> team : game_teams.entrySet()) {
                             int count = 0;
                             for(Map.Entry<String, String> team_count : game2.teams.entrySet()) {
-                                if(team_count.getKey().equals(team.getKey())) count++;
+                                if(team_count.getValue().equals(team.getKey())) count++;
                             }
-                            if((count != Integer.parseInt(team.getValue())) && (game2.joined_players.size() > 2)) {
+                            if(count < Integer.parseInt(String.valueOf(getTeams(game).get(team.getKey()).get("size")))) {
+                                joinTeam(player, team.getKey());
+                                break;
+                            }
+                            /*if((count != Integer.parseInt(team.getValue())) && (game2.joined_players.size() > 2)) {
                                 joinTeam(player, team.getKey());
                                 break;
                             } else if(count == 0) {
                                 joinTeam(player, team.getKey());
                                 break;
-                            }
+                            }*/
+
                         }
                     }
                 }
@@ -289,12 +290,10 @@ public class Game {
             }
             for(Map<String, Object> shop : getTeams(game).values()) createNpc(game, (Location) shop.get("villager"));
             for(Map.Entry<String, Map<String, Object>> spawner : getSpawners(game).entrySet()) {
-                int id = Bukkit.getServer().getScheduler().scheduleAsyncRepeatingTask(new Main(), new Runnable() {
-                    public void run() {
-                        BWGame game2 = getGame(game);
-                        if(game2 == null) return;
-                        game2.items.add(Bukkit.getWorld(cfg.get(game, "world")).dropItem((Location) spawner.getValue().get("location"), new ItemStack(Material.getMaterial(String.valueOf(spawner.getValue().get("type"))), 1)));
-                    }
+                int id = Bukkit.getServer().getScheduler().scheduleAsyncRepeatingTask(new Main(), () -> {
+                    BWGame game3 = getGame(game);
+                    if(game3 == null) return;
+                    game3.items.add(Bukkit.getWorld(cfg.get(game, "world")).dropItem((Location) spawner.getValue().get("location"), new ItemStack(Material.getMaterial(String.valueOf(spawner.getValue().get("type"))), 1)));
                 }, 0L, Integer.parseInt(String.valueOf(spawner.getValue().get("time"))) * 20L);
                 game2.task_ids.add(id);
             }
@@ -335,6 +334,23 @@ public class Game {
                 item.remove();
                 game2.items.remove(item);
             }
+            for(Map.Entry<Location, ItemStack[]> entry : game2.chests.entrySet()) {
+                if(entry.getKey().getBlock().getState() instanceof Chest) {
+                    Chest chest = (Chest) entry.getKey().getBlock().getState();
+                    ItemStack[] item_stack = new ItemStack[entry.getValue().length];
+                    for(int i = 0; i < entry.getValue().length; i++) {
+                        ItemStack item_stack_copy = entry.getValue()[i];
+                        if(item_stack_copy != null) {
+                            item_stack[i] = new ItemStack(item_stack_copy.getType());
+                            item_stack[i].setAmount(item_stack_copy.getAmount());
+                            item_stack[i].setDurability(item_stack_copy.getDurability());
+                            item_stack[i].setData(item_stack_copy.getData());
+                        } else item_stack[i] = null;
+                    }
+                    chest.getInventory().setContents(item_stack);
+                    chest.update(true);
+                }
+            }
             game2.reset();
             games.remove(game);
             return ChatColor.AQUA + "Map has been stopped successfully.";
@@ -345,12 +361,7 @@ public class Game {
             Sheep npc = (Sheep) Bukkit.getWorld(cfg.get(game, "world")).spawnCreature(location, CreatureType.SHEEP);
             game2.npcs.put(npc.getEntityId(), location);
             npc.setColor(DyeColor.GRAY);
-            int id = Bukkit.getScheduler().scheduleAsyncRepeatingTask(Main.instance, new Runnable() {
-                @Override
-                public void run() {
-                    npc.teleport(location);
-                }
-            }, 0L, 1L);
+            int id = Bukkit.getScheduler().scheduleAsyncRepeatingTask(Main.instance, () -> npc.teleport(location), 0L, 1L);
             game2.task_ids.add(id);
         }
         public static boolean isPlayerPlaying(String nick) {

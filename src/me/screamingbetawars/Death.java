@@ -1,24 +1,18 @@
 package me.screamingbetawars;
 
 import net.minecraft.server.Packet60Explosion;
-import net.minecraft.server.Packet9Respawn;
 import org.bukkit.*;
-import org.bukkit.block.NoteBlock;
-import org.bukkit.craftbukkit.CraftServer;
 import org.bukkit.craftbukkit.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.*;
 import me.screamingbetawars.Main.EventHandler;
-import org.bukkit.util.noise.OctaveGenerator;
 
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-
-import static org.bukkit.Bukkit.getServer;
 
 public class Death extends EntityListener implements Listener {
 
@@ -56,27 +50,23 @@ public class Death extends EntityListener implements Listener {
 
     @EventHandler
     public void onEntityExplode(EntityExplodeEvent event) {
-        for (String map : ConfigManager.map_cache.keySet()) {
-            if (ConfigManager.cfg.check(map, true, false).equals("true")) {
-                Location pos1 = ConfigManager.cfg.getLocation(map, "pos1");
-                Location pos2 = ConfigManager.cfg.getLocation(map, "pos2");
-                for(org.bukkit.block.Block block : event.blockList()) {
-                    if(Block.pos.check(pos1, pos2, block.getLocation()) == 3) {
-                        event.setCancelled(true);
-                        for(Player player : Bukkit.getOnlinePlayers()) {
-                            player.playEffect(event.getLocation(), Effect.SMOKE, 10);
-                            Location location = event.getLocation();
-                            ((CraftPlayer) player).getHandle().netServerHandler.sendPacket(new Packet60Explosion(location.getX(), location.getY(), location.getZ(), 0.2f, new HashSet<>()));
-                        }
-                        if(Block.blocks.get(map).contains(block.getLocation())) {
-                            block.setType(Material.AIR);
-                            ArrayList<Location> block_list = new ArrayList<>(Block.blocks.get(map));
-                            block_list.remove(block.getLocation());
-                            Block.blocks.put(map, block_list);
-                        }
+        new ConfigIterator(null, map -> {
+            for(org.bukkit.block.Block block : event.blockList()) {
+                if (Block.pos.check(map, block.getLocation()) == 3) {
+                    event.setCancelled(true);
+                    for (Player player : Bukkit.getOnlinePlayers()) {
+                        player.playEffect(event.getLocation(), Effect.SMOKE, 10);
+                        Location location = event.getLocation();
+                        ((CraftPlayer) player).getHandle().netServerHandler.sendPacket(new Packet60Explosion(location.getX(), location.getY(), location.getZ(), 0.2f, new HashSet<>()));
+                    }
+                    if (Block.blocks.get(map).contains(block.getLocation())) {
+                        block.setType(Material.AIR);
+                        ArrayList<Location> block_list = new ArrayList<>(Block.blocks.get(map));
+                        block_list.remove(block.getLocation());
+                        Block.blocks.put(map, block_list);
                     }
                 }
             }
-        }
+        });
     }
 }
