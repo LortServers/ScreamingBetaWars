@@ -36,7 +36,7 @@ public class Block extends BlockListener implements Listener {
         new ConfigIterator(event.getBlock().getLocation(), map -> {
             if((event.getPlayer() == null) || ((Game.game.isPlayerPlaying(event.getPlayer().getName())) && (Game.game.getPlayerMap(event.getPlayer().getName()).equals(map)))) {
                 ArrayList<Location> locations = new ArrayList<>();
-                for (Map<String, Object> entry : Game.game.getTeams(map).values()) {
+                for(Map<String, Object> entry : Game.game.getTeams(map).values()) {
                     locations.add((Location) entry.get("bed1"));
                     locations.add((Location) entry.get("bed2"));
                 }
@@ -45,8 +45,8 @@ public class Block extends BlockListener implements Listener {
                     if (bed.distance(event.getBlock().getLocation()) == 0) {
                         check = true;
                         Game.BWGame game2 = Game.game.getGame(map);
-                        for (Map.Entry<String, Map<String, Object>> entry : Game.game.getTeams(map).entrySet()) {
-                            if (((event.getBlock().getLocation().getBlockX() == ((Location) entry.getValue().get("bed1")).getBlockX()) && (event.getBlock().getLocation().getBlockY() == ((Location) entry.getValue().get("bed1")).getBlockY()) && (event.getBlock().getLocation().getBlockZ() == ((Location) entry.getValue().get("bed1")).getBlockZ())) || ((event.getBlock().getLocation().getBlockX() == ((Location) entry.getValue().get("bed2")).getBlockX()) && (event.getBlock().getLocation().getBlockY() == ((Location) entry.getValue().get("bed2")).getBlockY()) && (event.getBlock().getLocation().getBlockZ() == ((Location) entry.getValue().get("bed2")).getBlockZ()))) {
+                        for(Map.Entry<String, Map<String, Object>> entry : Game.game.getTeams(map).entrySet()) {
+                            if(((event.getBlock().getLocation().getBlockX() == ((Location) entry.getValue().get("bed1")).getBlockX()) && (event.getBlock().getLocation().getBlockY() == ((Location) entry.getValue().get("bed1")).getBlockY()) && (event.getBlock().getLocation().getBlockZ() == ((Location) entry.getValue().get("bed1")).getBlockZ())) || ((event.getBlock().getLocation().getBlockX() == ((Location) entry.getValue().get("bed2")).getBlockX()) && (event.getBlock().getLocation().getBlockY() == ((Location) entry.getValue().get("bed2")).getBlockY()) && (event.getBlock().getLocation().getBlockZ() == ((Location) entry.getValue().get("bed2")).getBlockZ()))) {
                                 if(Game.game.getPlayerTeam(event.getPlayer().getName()).equals(entry.getKey())) {
                                     event.getPlayer().sendMessage(ChatColor.RED + "You can't destroy your own bed!");
                                     event.setCancelled(true);
