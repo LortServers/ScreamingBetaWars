@@ -13,7 +13,6 @@ import org.bukkit.event.Listener;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import me.screamingbetawars.ConfigManager.*;
-import me.screamingbetawars.Game.*;
 import org.bukkit.scheduler.BukkitWorker;
 
 import java.io.File;
@@ -130,11 +129,11 @@ public class Main extends JavaPlugin implements CommandExecutor, Listener, Event
                 if(args[2].equals("create")) sender.sendMessage(cfg.create(args[1], sender));
                 else if(args[2].equals("edit")) {
                     if(cfg.check(args[1], true, false).equals("true")) {
-                        if(Game.game.getGame(args[1]).started) {
+                        if(Game.getGame(args[1]).started) {
                             sender.sendMessage(ChatColor.RED + "You cannot change the map state after the game has started!");
                             return true;
                         }
-                        Game.game.endGame(args[1]);
+                        Game.endGame(args[1]);
                         cfg.put(args[1], "edit", "true");
                         sender.sendMessage(ChatColor.AQUA + "Map status has been set to edit state.");
                     } else sender.sendMessage(ChatColor.RED + "Map is already in edit state!");
@@ -224,7 +223,7 @@ public class Main extends JavaPlugin implements CommandExecutor, Listener, Event
                                 sender.sendMessage(ChatColor.AQUA + "Spawn for team \"" + args[4] + "\" is set.");
                             } else sender.sendMessage(ChatColor.RED + "Team does not exist.");
                         } else if(args[3].equals("shop")) {
-                            if (cfg.find(args[1], "team-" + args[4])) {
+                            if(cfg.find(args[1], "team-" + args[4])) {
                                 cfg.putLocationExact(args[1], "villager-?-team-" + args[4], player.getName());
                                 cfg.put(args[1], "villager-yaw-team-" + args[4], String.valueOf(player.getLocation().getYaw()));
                                 cfg.put(args[1], "villager-pitch-team-" + args[4], String.valueOf(player.getLocation().getPitch()));
@@ -234,7 +233,7 @@ public class Main extends JavaPlugin implements CommandExecutor, Listener, Event
                     } else shortcuts.syntax(sender);
                 } else if(args[2].equals("spawner")) {
                     if(args.length == 5) {
-                        if (cfg.check(args[1], true, true).equals("true")) {
+                        if(cfg.check(args[1], true, true).equals("true")) {
                             Material test = Material.getMaterial(args[3].toUpperCase());
                             if(test == null) {
                                 shortcuts.custom(sender, "Incorrect item type!");
@@ -258,14 +257,14 @@ public class Main extends JavaPlugin implements CommandExecutor, Listener, Event
             }
         } else if(args[0].equals("join")) {
             if(args.length == 2) {
-                if (cfg.check(args[1], true, false).equals("true")) sender.sendMessage(game.joinGame(args[1], player.getName()));
+                if (cfg.check(args[1], true, false).equals("true")) sender.sendMessage(Game.joinGame(args[1], player.getName()));
                 else if (cfg.check(args[1], true, false).equals(ChatColor.RED + "Map not found.")) sender.sendMessage(ChatColor.RED + "Map not found.");
                 else sender.sendMessage(ChatColor.RED + "Technical difficulties, sorry!");
             } else shortcuts.syntax(sender);
-        } else if(args[0].equals("leave")) sender.sendMessage(game.leaveGame(player.getName()));
+        } else if(args[0].equals("leave")) sender.sendMessage(Game.leaveGame(player.getName()));
         else if(args[0].equals("start")) {
             if(!shortcuts.permissions(sender)) return true;
-            sender.sendMessage(game.forceStart(sender.getName()));
+            sender.sendMessage(Game.forceStart(sender.getName()));
         } else if(args[0].equals("setspawn")) {
             if(!shortcuts.permissions(sender)) return true;
             cfg.putLocation("config", "spawn-?", player.getName());
@@ -274,18 +273,18 @@ public class Main extends JavaPlugin implements CommandExecutor, Listener, Event
             sender.sendMessage(ChatColor.AQUA + "Spawn point has been set successfully!");
         } else if(args[0].equals("stop")) {
             if(!shortcuts.permissions(sender)) return true;
-            if(args.length == 2) sender.sendMessage(Game.game.endGame(args[1]));
+            if(args.length == 2) sender.sendMessage(Game.endGame(args[1]));
             else shortcuts.syntax(sender);
         } else if(args[0].equals("pick")) {
-            if(args.length == 2) sender.sendMessage(Game.game.joinTeam(sender.getName(), args[1]));
+            if(args.length == 2) sender.sendMessage(Game.joinTeam(sender.getName(), args[1]));
             else shortcuts.syntax(sender);
         }
         return true;
     }
 
     public void registerEvents(Listener listener, Plugin plugin) {
-        for (final Method method : listener.getClass().getDeclaredMethods()) {
-            if (method.isAnnotationPresent(EventHandler.class)) {
+        for(final Method method : listener.getClass().getDeclaredMethods()) {
+            if(method.isAnnotationPresent(EventHandler.class)) {
                 final EventHandler eventHandler = method.getAnnotation(EventHandler.class);
                 String temp = method.getParameters()[0].getType().getSimpleName();
                 temp = temp.replace("Event", "").replaceFirst(Character.toString(temp.charAt(0)), Character.toString(temp.toLowerCase().charAt(0)));

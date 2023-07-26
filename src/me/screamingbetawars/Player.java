@@ -40,15 +40,15 @@ public class Player extends PlayerListener implements Listener, EventListener {
     @EventHandler
     public void onRespawn(PlayerRespawnEvent event) {
         String nick = event.getPlayer().getName();
-        if(Game.game.isPlayerPlaying(nick)) {
-            String game = Game.game.getPlayerMap(nick);
-            if(Death.time.get(nick) <= Instant.now().getEpochSecond()) event.setRespawnLocation((Location) Game.game.getTeams(game).get(Game.game.getPlayerTeam(nick)).get("spawn"));
+        if(Game.isPlayerPlaying(nick)) {
+            String game = Game.getPlayerMap(nick);
+            if(Death.time.get(nick) <= Instant.now().getEpochSecond()) event.setRespawnLocation((Location) Game.getTeams(game).get(Game.getPlayerTeam(nick)).get("spawn"));
             else {
                 event.setRespawnLocation(ConfigManager.cfg.getLocation(game, "spec-"));
                 respawn_run_ids.put(nick,
                     Bukkit.getServer().getScheduler().scheduleSyncRepeatingTask(new Main(), () -> {
                         if(Death.time.get(nick) <= Instant.now().getEpochSecond()) {
-                            event.getPlayer().teleport((Location) Game.game.getTeams(game).get(Game.game.getPlayerTeam(nick)).get("spawn"));
+                            event.getPlayer().teleport((Location) Game.getTeams(game).get(Game.getPlayerTeam(nick)).get("spawn"));
                             removePlayerFromRespawn(nick);
                         } else event.getPlayer().sendMessage(ChatColor.AQUA + "You will respawn in " + (Death.time.get(nick) - Instant.now().getEpochSecond()) + " seconds!");
                     }, 0L, 20L)
@@ -76,15 +76,15 @@ public class Player extends PlayerListener implements Listener, EventListener {
     @EventHandler
     public void onMessage(PlayerChatEvent event) {
         String nick = event.getPlayer().getName();
-        if((Game.game.isPlayerPlaying(nick)) && (Game.game.getGame(Game.game.getPlayerMap(nick)).started)) {
-            String team = Game.game.getPlayerTeam(nick);
-            event.setFormat("[" + ChatColor.valueOf((String) Game.game.getTeams(Game.game.getPlayerMap(nick)).get(team).get("color")) + team.toUpperCase() + ChatColor.WHITE + "] <" + nick + "> " + event.getMessage());
+        if((Game.isPlayerPlaying(nick)) && (Game.getGame(Game.getPlayerMap(nick)).started)) {
+            String team = Game.getPlayerTeam(nick);
+            event.setFormat("[" + ChatColor.valueOf((String) Game.getTeams(Game.getPlayerMap(nick)).get(team).get("color")) + team.toUpperCase() + ChatColor.WHITE + "] <" + nick + "> " + event.getMessage());
         }
     }
 
     @EventHandler
     public void onPlayerSleep(PlayerBedEnterEvent event) {
-        if(Game.game.isPlayerPlaying(event.getPlayer().getName())) event.setCancelled(true);
+        if(Game.isPlayerPlaying(event.getPlayer().getName())) event.setCancelled(true);
     }
 
     public static void playerOverride(org.bukkit.entity.Player player) throws NoSuchFieldException, IllegalAccessException {
@@ -97,7 +97,7 @@ public class Player extends PlayerListener implements Listener, EventListener {
                 if(p instanceof Packet102WindowClick) {
                     Packet102WindowClick packet = (Packet102WindowClick) p;
                     if(packet.a == 100) {
-                        if(Game.game.isPlayerPlaying(player.getName())) {
+                        if(Game.isPlayerPlaying(player.getName())) {
                             if((packet.b >= 0) && (packet.b <= 8)) {
                                 String item = "", item_price = "";
                                 int item_amount = 100, cost = 100;
@@ -134,7 +134,7 @@ public class Player extends PlayerListener implements Listener, EventListener {
                                         }
                                     } catch (ArrayIndexOutOfBoundsException ignored) {}
                                 }
-                                if (!check) player.sendMessage(ChatColor.RED + "You don't have enough resources!");
+                                if(!check) player.sendMessage(ChatColor.RED + "You don't have enough resources!");
                             }
                         } else player.sendMessage(ChatColor.RED + "You can't do that.");
                         if((packet.b != -999) && (packet.e != null)) {

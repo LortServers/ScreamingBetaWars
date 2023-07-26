@@ -25,27 +25,26 @@ public class ConfigManager {
 
         public static void update() {
             File[] list = Bukkit.getServer().getPluginManager().getPlugin("ScreamingBetaWars").getDataFolder().listFiles();
-            if (list != null) {
-                for (File yaml_file : list) {
-                    if (!yaml_file.isDirectory()) {
-                        try {
-                            Yaml yaml = new Yaml(cfg.getYamlOptions());
-                            InputStream file = Files.newInputStream(yaml_file.toPath());
-                            if(yaml_file.getName().equals("config.yml")) continue;
-                            map_cache.put(yaml_file.getName().replace(".yml", ""), (Map<String, Object>) yaml.load(file));
-                        } catch(Exception ignored) {}
-                    }
+            if(list == null) return;
+            for(File yaml_file : list) {
+                if(!yaml_file.isDirectory()) {
+                    try {
+                        Yaml yaml = new Yaml(cfg.getYamlOptions());
+                        InputStream file = Files.newInputStream(yaml_file.toPath());
+                        if(yaml_file.getName().equals("config.yml")) continue;
+                        map_cache.put(yaml_file.getName().replace(".yml", ""), (Map<String, Object>) yaml.load(file));
+                    } catch(Exception ignored) {}
                 }
             }
         }
 
         public static String check(String arg, boolean map_exists) {
-            if (map_cache.containsKey(arg) == map_exists) return "true";
+            if(map_cache.containsKey(arg) == map_exists) return "true";
             else return ChatColor.RED + "Map already exists!";
         }
 
         public static String check(String arg, boolean map_exists, boolean edit) {
-            if (check(arg, true).equals(String.valueOf(map_exists))) {
+            if(check(arg, true).equals(String.valueOf(map_exists))) {
                 if(cfg.get(arg, "edit") == null) return "false";
                 if(cfg.get(arg, "edit").equals(String.valueOf(edit))) return "true";
                 else return ChatColor.RED + "Map is not being edited!";
@@ -114,9 +113,7 @@ public class ConfigManager {
                     cfg.put(arg, "spawners", "1");
                     cfg.put(arg, "world", sender.getServer().getPlayer(sender.getName()).getWorld().getName());
                     return ChatColor.AQUA + "Map \"" + arg + "\" created successfully.";
-                } catch (Exception e) {
-                    return ChatColor.RED + "Something went wrong. Please contact us using this error code: 0x000002.";
-                }
+                } catch (Exception e) { return ChatColor.RED + "Something went wrong. Please contact us using this error code: 0x000002."; }
             } else return ChatColor.RED + "Map already exists!";
         }
 

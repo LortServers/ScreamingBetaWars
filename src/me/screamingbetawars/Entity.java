@@ -17,7 +17,7 @@ import java.util.regex.Pattern;
 public class Entity extends PlayerListener implements Listener {
     @EventHandler
     public void onPlayerInteract(PlayerInteractEntityEvent event) {
-        if((Game.game.getPlayerMap(event.getPlayer().getName()) != null) && (Game.game.isGameNPC(event.getRightClicked().getEntityId()))) openShop(event.getPlayer());
+        if((!Game.getPlayerMap(event.getPlayer().getName()).equals("")) && (Game.isGameNPC(event.getRightClicked().getEntityId()))) openShop(event.getPlayer());
     }
 
     // Packet102WindowClick - possible way of receiving clicked item slots
