@@ -38,26 +38,26 @@ public class Block extends BlockListener implements Listener {
         new ConfigIterator(location, map -> {
             if(Game.getPlayerMap(player_name).equals(map)) {
                 ArrayList<Location> locations = new ArrayList<>();
-                for(Map<String, Object> entry : Game.getTeams(map).values()) {
-                    locations.add((Location) entry.get("bed1"));
-                    locations.add((Location) entry.get("bed2"));
+                for(Game.BWTeam team : Game.getTeams(map)) {
+                    locations.add(team.bed1);
+                    locations.add(team.bed2);
                 }
                 boolean check = false;
                 for(Location bed : locations) {
                     if(bed.distance(location) == 0) {
                         check = true;
                         Game.BWGame game2 = Game.getGame(map);
-                        for(Map.Entry<String, Map<String, Object>> entry : Game.getTeams(map).entrySet()) {
-                            Location bed1 = ((Location) entry.getValue().get("bed1")), bed2 = ((Location) entry.getValue().get("bed2"));
+                        for(Game.BWTeam team : Game.getTeams(map)) {
+                            Location bed1 = team.bed1, bed2 = team.bed2;
                             if(((location.getBlockX() == bed1.getBlockX()) && (location.getBlockY() == bed1.getBlockY()) && (location.getBlockZ() == bed1.getBlockZ())) || ((location.getBlockX() == bed2.getBlockX()) && (location.getBlockY() == bed2.getBlockY()) && (location.getBlockZ() == bed2.getBlockZ()))) {
-                                if(Game.getPlayerTeam(player_name).equals(entry.getKey())) {
+                                if(Game.getPlayerTeam(player_name).equals(team.name)) {
                                     event.getPlayer().sendMessage(ChatColor.RED + "You can't destroy your own bed!");
                                     event.setCancelled(true);
                                     return;
                                 }
-                                if(!game2.destroyed_beds.contains(entry.getKey())) {
-                                    game2.destroyed_beds.add(entry.getKey());
-                                    for(String username : game2.joined_players) Bukkit.getPlayer(username).sendMessage(ChatColor.AQUA + "Player " + player_name + " has destroyed the bed of team \"" + entry.getKey() + "\".");
+                                if(!game2.destroyed_beds.contains(team.name)) {
+                                    game2.destroyed_beds.add(team.name);
+                                    for(String username : game2.joined_players) Bukkit.getPlayer(username).sendMessage(ChatColor.AQUA + "Player " + player_name + " has destroyed the bed of team \"" + team.name + "\".");
                                 }
                             }
                         }
