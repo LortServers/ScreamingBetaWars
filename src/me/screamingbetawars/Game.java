@@ -23,12 +23,12 @@ import org.bukkit.material.MaterialData;
 
 public class Game {
     static HashMap<String, BWGame> games = new HashMap<>();
-    public static BWGame getGame(String game) {
-        if(games.get(game) == null) games.put(game, new BWGame());
-        return games.get(game);
+    public static BWGame getGame(String map) {
+        if(games.get(map) == null) games.put(map, new BWGame());
+        return games.get(map);
     }
-    public static String joinGame(String name, String nick) {
-        BWGame game = getGame(name);
+    public static String joinGame(String map, String nick) {
+        BWGame game = getGame(map);
         if(!game.isPlayerPlaying(nick)) {
             if(!game.hasStarted()) game.addPlayer(nick);
             else return ChatColor.RED + "This game has already started!";
@@ -38,14 +38,14 @@ public class Game {
         game.getPlayer(nick).setPreGameInventory(new BWPlayerPreGameInventory(player_inventory.getContents(), player_inventory.getArmorContents()));
         player_inventory.setArmorContents(new ItemStack[Bukkit.getPlayer(nick).getInventory().getArmorContents().length]);
         player_inventory.clear();
-        player.teleport(cfg.getLocation(name, "lobby-"));
+        player.teleport(cfg.getLocation(map, "lobby-"));
         player.sendMessage(ChatColor.AQUA + "You've successfully joined a map!");
         int size = 0;
-        for(BWTeam team : getTeams(name)) size += team.getSize();
-        if(game.getPlayerCount() == 1) proceedGame(name);
+        for(BWTeam team : getTeams(map)) size += team.getSize();
+        if(game.getPlayerCount() == 1) proceedGame(map);
         for(BWPlayer bw_player : game.getPlayers()) Bukkit.getPlayer(bw_player.getName()).sendMessage(ChatColor.AQUA + "Player " + nick + " has joined the map (" + game.getPlayerCount() + "/" + size + ")!");
-        ArrayList<BWTeam> available_game_teams = getTeams(name);
-        for(BWTeam team : getTeams(name)) { if(team.getSize() == game.getTeamCount(team.getName())) available_game_teams.remove(team); }
+        ArrayList<BWTeam> available_game_teams = getTeams(map);
+        for(BWTeam team : getTeams(map)) { if(team.getSize() == game.getTeamCount(team.getName())) available_game_teams.remove(team); }
         String teams = "";
         boolean check = false;
         for(BWTeam team : available_game_teams) {
@@ -58,30 +58,30 @@ public class Game {
         return ChatColor.GOLD + "Please pick a team using /bw pick <team>. Available teams: " + teams + ".";
     }
 
-    public static ArrayList<BWTeam> getTeams(String game) {
+    public static ArrayList<BWTeam> getTeams(String map) {
         ArrayList<BWTeam> team_list = new ArrayList<>();
-        Map<String, Object> teams = cfg.getStartingWith(game, "team-");
+        Map<String, Object> teams = cfg.getStartingWith(map, "team-");
         for(Map.Entry<String, Object> team_data : teams.entrySet()) {
             String name = team_data.getKey().replace("team-", ""), color = String.valueOf(team_data.getValue());
-            int size = Integer.parseInt(cfg.get(game, "size-team-" + name));
-            Location bed1 = new Location(Bukkit.getServer().getWorld(cfg.get(game, "world")), cfg.getInt(game, "x1-bed-team-" + name), cfg.getInt(game, "y1-bed-team-" + name), cfg.getInt(game, "z1-bed-team-" + name));
-            Location bed2 = new Location(Bukkit.getServer().getWorld(cfg.get(game, "world")), cfg.getInt(game, "x2-bed-team-" + name), cfg.getInt(game, "y2-bed-team-" + name), cfg.getInt(game, "z2-bed-team-" + name));
-            Location villager = new Location(Bukkit.getServer().getWorld(cfg.get(game, "world")), cfg.getDouble(game, "villager-x-team-" + name), cfg.getDouble(game, "villager-y-team-" + name), cfg.getDouble(game, "villager-z-team-" + name), Float.parseFloat(cfg.get(game, "villager-yaw-team-" + name)), Float.parseFloat(cfg.get(game, "villager-pitch-team-" + name)));
-            Location spawn = new Location(Bukkit.getServer().getWorld(cfg.get(game, "world")), cfg.getDouble(game, "x-spawn-team-" + name), cfg.getDouble(game, "y-spawn-team-" + name), cfg.getDouble(game, "z-spawn-team-" + name));
+            int size = Integer.parseInt(cfg.get(map, "size-team-" + name));
+            Location bed1 = new Location(Bukkit.getServer().getWorld(cfg.get(map, "world")), cfg.getInt(map, "x1-bed-team-" + name), cfg.getInt(map, "y1-bed-team-" + name), cfg.getInt(map, "z1-bed-team-" + name));
+            Location bed2 = new Location(Bukkit.getServer().getWorld(cfg.get(map, "world")), cfg.getInt(map, "x2-bed-team-" + name), cfg.getInt(map, "y2-bed-team-" + name), cfg.getInt(map, "z2-bed-team-" + name));
+            Location villager = new Location(Bukkit.getServer().getWorld(cfg.get(map, "world")), cfg.getDouble(map, "villager-x-team-" + name), cfg.getDouble(map, "villager-y-team-" + name), cfg.getDouble(map, "villager-z-team-" + name), Float.parseFloat(cfg.get(map, "villager-yaw-team-" + name)), Float.parseFloat(cfg.get(map, "villager-pitch-team-" + name)));
+            Location spawn = new Location(Bukkit.getServer().getWorld(cfg.get(map, "world")), cfg.getDouble(map, "x-spawn-team-" + name), cfg.getDouble(map, "y-spawn-team-" + name), cfg.getDouble(map, "z-spawn-team-" + name));
             team_list.add(new BWTeam(name, color, size, bed1, bed2, villager, spawn));
         }
         return team_list;
     }
 
-    public static BWTeam getTeam(String game, String name) {
-        Map<String, Object> team_cfg_data = cfg.getStartingWith(game, "team-" + name);
+    public static BWTeam getTeam(String map, String name) {
+        Map<String, Object> team_cfg_data = cfg.getStartingWith(map, "team-" + name);
         for(Map.Entry<String, Object> team_data : team_cfg_data.entrySet()) {
             String color = String.valueOf(team_data.getValue());
-            int size = Integer.parseInt(cfg.get(game, "size-team-" + name));
-            Location bed1 = new Location(Bukkit.getServer().getWorld(cfg.get(game, "world")), cfg.getInt(game, "x1-bed-team-" + name), cfg.getInt(game, "y1-bed-team-" + name), cfg.getInt(game, "z1-bed-team-" + name));
-            Location bed2 = new Location(Bukkit.getServer().getWorld(cfg.get(game, "world")), cfg.getInt(game, "x2-bed-team-" + name), cfg.getInt(game, "y2-bed-team-" + name), cfg.getInt(game, "z2-bed-team-" + name));
-            Location villager = new Location(Bukkit.getServer().getWorld(cfg.get(game, "world")), cfg.getDouble(game, "villager-x-team-" + name), cfg.getDouble(game, "villager-y-team-" + name), cfg.getDouble(game, "villager-z-team-" + name), Float.parseFloat(cfg.get(game, "villager-yaw-team-" + name)), Float.parseFloat(cfg.get(game, "villager-pitch-team-" + name)));
-            Location spawn = new Location(Bukkit.getServer().getWorld(cfg.get(game, "world")), cfg.getDouble(game, "x-spawn-team-" + name), cfg.getDouble(game, "y-spawn-team-" + name), cfg.getDouble(game, "z-spawn-team-" + name));
+            int size = Integer.parseInt(cfg.get(map, "size-team-" + name));
+            Location bed1 = new Location(Bukkit.getServer().getWorld(cfg.get(map, "world")), cfg.getInt(map, "x1-bed-team-" + name), cfg.getInt(map, "y1-bed-team-" + name), cfg.getInt(map, "z1-bed-team-" + name));
+            Location bed2 = new Location(Bukkit.getServer().getWorld(cfg.get(map, "world")), cfg.getInt(map, "x2-bed-team-" + name), cfg.getInt(map, "y2-bed-team-" + name), cfg.getInt(map, "z2-bed-team-" + name));
+            Location villager = new Location(Bukkit.getServer().getWorld(cfg.get(map, "world")), cfg.getDouble(map, "villager-x-team-" + name), cfg.getDouble(map, "villager-y-team-" + name), cfg.getDouble(map, "villager-z-team-" + name), Float.parseFloat(cfg.get(map, "villager-yaw-team-" + name)), Float.parseFloat(cfg.get(map, "villager-pitch-team-" + name)));
+            Location spawn = new Location(Bukkit.getServer().getWorld(cfg.get(map, "world")), cfg.getDouble(map, "x-spawn-team-" + name), cfg.getDouble(map, "y-spawn-team-" + name), cfg.getDouble(map, "z-spawn-team-" + name));
             return new BWTeam(name, color, size, bed1, bed2, villager, spawn);
         }
         return null;
@@ -109,26 +109,26 @@ public class Game {
         return count;
     }
 
-    public static Map<String, Map<String, Object>> getSpawners(String game) {
+    public static Map<String, Map<String, Object>> getSpawners(String map) {
         Map<String, Map<String, Object>> spawner_list = new HashMap<>();
-        Map<String, Object> spawners = cfg.getStartingWith(game, "spawner-x-");
+        Map<String, Object> spawners = cfg.getStartingWith(map, "spawner-x-");
         for(Object spawner2 : spawners.keySet()) {
             Map<String, Object> current_spawner = new HashMap<>();
             String spawner = spawner2.toString();
             spawner = spawner.replace("spawner-x-", "");
-            Location location = new Location(Bukkit.getServer().getWorld(cfg.get(game, "world")), cfg.getInt(game, "spawner-x-" + spawner), cfg.getInt(game, "spawner-y-" + spawner), cfg.getInt(game, "spawner-z-" + spawner));
+            Location location = new Location(Bukkit.getServer().getWorld(cfg.get(map, "world")), cfg.getInt(map, "spawner-x-" + spawner), cfg.getInt(map, "spawner-y-" + spawner), cfg.getInt(map, "spawner-z-" + spawner));
             current_spawner.put("location", location);
-            current_spawner.put("type", cfg.get(game, "spawner-type-" + spawner));
-            current_spawner.put("time", cfg.get(game, "spawner-time-" + spawner));
+            current_spawner.put("type", cfg.get(map, "spawner-type-" + spawner));
+            current_spawner.put("time", cfg.get(map, "spawner-time-" + spawner));
             spawner_list.put(spawner, current_spawner);
         }
         return spawner_list;
     }
 
     public static String joinTeam(String nick, String team) {
-        String name = getPlayerMap(nick);
-        BWGame game = getGame(name);
-        BWTeam game_team = getTeam(name, team);
+        String map = getPlayerMap(nick);
+        BWGame game = getGame(map);
+        BWTeam game_team = getTeam(map, team);
         if(game.hasStarted()) return ChatColor.RED + "You cannot change your team after the game has started!";
         if(game.isPlayerPlaying(nick)) {
             if(game_team != null) {
@@ -233,8 +233,6 @@ public class Game {
         BWGame game = getGame(map);
         ArrayList<BWTeam> map_teams = getTeams(map);
         if(game.getPlayersInTeamCount() != game.getPlayerCount()) {
-            Map<String, String> game_teams = new HashMap<>();
-            for(BWTeam team : map_teams) game_teams.put(team.getName(), String.valueOf(team.getSize())); // I have no idea why this needs size as a string, or basically size at all, see comment just below.
             for(BWPlayer player : game.getPlayers()) {
                 if(player.getTeam() == null) {
                     for(BWTeam team : getTeams(map)) {
@@ -319,9 +317,9 @@ public class Game {
         return ChatColor.AQUA + "Map has been stopped successfully.";
     }
 
-    public static void createNpc(String game, Location location) {
-        BWGame game2 = getGame(game);
-        Sheep npc = (Sheep) Bukkit.getWorld(cfg.get(game, "world")).spawnCreature(location, CreatureType.SHEEP);
+    public static void createNpc(String map, Location location) {
+        BWGame game2 = getGame(map);
+        Sheep npc = (Sheep) Bukkit.getWorld(cfg.get(map, "world")).spawnCreature(location, CreatureType.SHEEP);
         game2.npcs.put(npc.getEntityId(), location);
         npc.setColor(DyeColor.GRAY);
         int id = Bukkit.getScheduler().scheduleAsyncRepeatingTask(Main.instance, () -> npc.teleport(location), 0L, 1L);
