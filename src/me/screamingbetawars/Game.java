@@ -5,91 +5,53 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import me.screamingbetawars.ConfigManager.*;
+import me.screamingbetawars.classes.BWGame;
+import me.screamingbetawars.classes.BWPlayer;
+import me.screamingbetawars.classes.BWPlayerPreGameInventory;
+import me.screamingbetawars.classes.BWTeam;
 
 import org.bukkit.*;
 import org.bukkit.block.Chest;
 import org.bukkit.entity.CreatureType;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Item;
+import org.bukkit.entity.Player;
 import org.bukkit.entity.Sheep;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.material.MaterialData;
 
 public class Game {
-    static class BWGame {
-        public static boolean started = false;
-        public static ArrayList<String> joined_players = new ArrayList<>();
-        static HashMap<String, String> teams = new HashMap<>();
-        static HashMap<MaterialData, Location> beds = new HashMap<>();
-        public static HashMap<Integer, Location> npcs = new HashMap<>();
-        public static ArrayList<String> destroyed_beds = new ArrayList<>();
-        public static ArrayList<Integer> task_ids = new ArrayList<>();
-        public static ArrayList<Item> items = new ArrayList<>();
-        public static HashMap<String, HashMap<ItemStack[], ItemStack[]>> player_inventories = new HashMap<>();
-        public static HashMap<Location, ItemStack[]> chests = new HashMap<>();
-        public void reset() {
-            started = false;
-            joined_players = new ArrayList<>();
-            teams = new HashMap<>();
-            beds = new HashMap<>();
-            npcs = new HashMap<>();
-            destroyed_beds = new ArrayList<>();
-            task_ids = new ArrayList<>();
-            items = new ArrayList<>();
-            player_inventories = new HashMap<>();
-            chests = new HashMap<>();
-        }
-    }
-
-    static class BWTeam {
-        public String name, color;
-        public int size;
-        public Location bed1, bed2, villager, spawn;
-        public BWTeam(String n, String c, int s, Location b1, Location b2, Location v, Location s2) {
-            name = n;
-            color = c;
-            size = s;
-            bed1 = b1;
-            bed2 = b2;
-            villager = v;
-            spawn = s2;
-        }
-    }
-
     static HashMap<String, BWGame> games = new HashMap<>();
     public static BWGame getGame(String game) {
         if(games.get(game) == null) games.put(game, new BWGame());
         return games.get(game);
     }
-    public static String joinGame(String game, String nick) {
-        BWGame game2 = getGame(game);
-        if(!game2.joined_players.contains(nick)) {
-            if(!game2.started) game2.joined_players.add(nick);
+    public static String joinGame(String name, String nick) {
+        BWGame game = getGame(name);
+        if(!game.isPlayerPlaying(nick)) {
+            if(!game.hasStarted()) game.addPlayer(nick);
             else return ChatColor.RED + "This game has already started!";
         } else return ChatColor.RED + "You are already in a game!";
-        HashMap<ItemStack[], ItemStack[]> player_inventory = new HashMap<>();
-        player_inventory.put(Bukkit.getPlayer(nick).getInventory().getContents(), Bukkit.getPlayer(nick).getInventory().getArmorContents());
-        game2.player_inventories.put(nick, player_inventory);
-        Bukkit.getPlayer(nick).getInventory().setArmorContents(new ItemStack[Bukkit.getPlayer(nick).getInventory().getArmorContents().length]);
-        Bukkit.getPlayer(nick).getInventory().clear();
-        Bukkit.getPlayer(nick).teleport(cfg.getLocation(game, "lobby-"));
-        Bukkit.getPlayer(nick).sendMessage(ChatColor.AQUA + "You've successfully joined a map!");
+        Player player = Bukkit.getPlayer(nick);
+        PlayerInventory player_inventory = player.getInventory();
+        game.getPlayer(nick).setPreGameInventory(new BWPlayerPreGameInventory(player_inventory.getContents(), player_inventory.getArmorContents()));
+        player_inventory.setArmorContents(new ItemStack[Bukkit.getPlayer(nick).getInventory().getArmorContents().length]);
+        player_inventory.clear();
+        player.teleport(cfg.getLocation(name, "lobby-"));
+        player.sendMessage(ChatColor.AQUA + "You've successfully joined a map!");
         int size = 0;
-        for(BWTeam team : getTeams(game)) size += team.size;
-        if(game2.joined_players.size() == 1) proceedGame(game);
-        for(String player : game2.joined_players) Bukkit.getPlayer(player).sendMessage(ChatColor.AQUA + "Player " + nick + " has joined the map (" + game2.joined_players.size() + "/" + size + ")!");
-        ArrayList<BWTeam> available_game_teams = getTeams(game);
-        for(BWTeam team : getTeams(game)) {
-            Collection<String> teams = game2.teams.values();
-            for(String team2 : game2.teams.values()) { if(!team2.equals(team.name)) teams.remove(team.name); }
-            if(team.size == teams.size()) available_game_teams.remove(team);
-        }
+        for(BWTeam team : getTeams(name)) size += team.getSize();
+        if(game.getPlayerCount() == 1) proceedGame(name);
+        for(BWPlayer bw_player : game.getPlayers()) Bukkit.getPlayer(bw_player.getName()).sendMessage(ChatColor.AQUA + "Player " + nick + " has joined the map (" + game.getPlayerCount() + "/" + size + ")!");
+        ArrayList<BWTeam> available_game_teams = getTeams(name);
+        for(BWTeam team : getTeams(name)) { if(team.getSize() == game.getTeamCount(team.getName())) available_game_teams.remove(team); }
         String teams = "";
         boolean check = false;
         for(BWTeam team : available_game_teams) {
-            if(check) teams += ", " + team.name;
+            if(check) teams += ", " + team.getName();
             else {
-                teams += team.name;
+                teams += team.getName();
                 check = true;
             }
         }
@@ -164,18 +126,14 @@ public class Game {
     }
 
     public static String joinTeam(String nick, String team) {
-        String game = getPlayerMap(nick);
-        BWGame game2 = getGame(game);
-        BWTeam game_team = getTeam(game, team);
-        if(game2.started) return ChatColor.RED + "You cannot change your team after the game has started!";
-        if(game2.joined_players.contains(nick)) {
+        String name = getPlayerMap(nick);
+        BWGame game = getGame(name);
+        BWTeam game_team = getTeam(name, team);
+        if(game.hasStarted()) return ChatColor.RED + "You cannot change your team after the game has started!";
+        if(game.isPlayerPlaying(nick)) {
             if(game_team != null) {
-                int count = 0;
-                for(Map.Entry<String, String> team_count : game2.teams.entrySet()) {
-                    if(team_count.getKey().equals(team)) count++;
-                }
-                if(count != game_team.size) {
-                    game2.teams.put(nick, team);
+                if(game.getTeamCount(team) != game_team.getSize()) {
+                    game.getPlayer(nick).setTeam(game_team);
                     //leaveTeam(nick);
                     return ChatColor.AQUA + "Successfully joined team \"" + team + "\"!";
                 } else return ChatColor.RED + "Team \"" + team + "\" is full!";
@@ -183,31 +141,29 @@ public class Game {
         } else return ChatColor.RED + "You are not playing on any map!";
     }
 
-    public static String getPlayerTeam(String nick) {
-        return getGame(getPlayerMap(nick)).teams.getOrDefault(nick, null);
+    public static BWTeam getPlayerTeam(String nick) {
+        return getGame(getPlayerMap(nick)).getPlayer(nick).getTeam();
     }
 
     public static String leaveTeam(String nick) {
-        String game = getPlayerMap(nick);
-        BWGame game2 = getGame(game);
-        if(game2.started) return ChatColor.RED + "You cannot change your team after the game has started!";
-        if(game2.teams.containsKey(nick)) {
-            game2.teams.remove(nick);
+        String map = getPlayerMap(nick);
+        BWGame game = getGame(map);
+        if(game.hasStarted()) return ChatColor.RED + "You cannot change your team after the game has started!";
+        if(game.getPlayer(nick).getTeam() != null) {
+            game.getPlayer(nick).setTeam(null);
             return ChatColor.AQUA + "Successfully left the team!";
         } else return ChatColor.RED + "You don't belong to any team!";
     }
 
     public static String leaveGame(String nick) {
         if(!isPlayerPlaying(nick)) return ChatColor.RED + "You are not playing!";
-        String game = getPlayerMap(nick);
-        BWGame game2 = getGame(game);
+        String map = getPlayerMap(nick);
+        BWGame game = getGame(map);
         //if(!game2.joined_players.contains(nick)) return ChatColor.RED + "You are not playing!";
         Bukkit.getPlayer(nick).getInventory().clear();
-        game2.joined_players.remove(nick);
-        game2.teams.remove(nick);
         int size = 0;
-        for(BWTeam team : getTeams(game)) size += team.size;
-        for(String player : game2.joined_players) Bukkit.getPlayer(player).sendMessage(ChatColor.AQUA + "Player " + nick + " has left the map (" + game2.joined_players.size() + "/" + size + ")!");
+        for(BWTeam team : getTeams(map)) size += team.getSize();
+        for(BWPlayer player : game.getPlayers()) Bukkit.getPlayer(player.getName()).sendMessage(ChatColor.AQUA + "Player " + nick + " has left the map (" + (game.getPlayerCount() - 1) + "/" + size + ")!");
         /*String random_team = "";
         if(game2.joined_players.size() > 0) {
             for (String team : game2.joined_players) {
@@ -227,35 +183,35 @@ public class Game {
             spawn.setPitch(Float.parseFloat(cfg.get("config", "spawn-pitch")));
             Bukkit.getPlayer(nick).teleport(spawn);
         } else Bukkit.getPlayer(nick).teleport(Bukkit.getPlayer(nick).getWorld().getSpawnLocation());
-        Map.Entry<ItemStack[], ItemStack[]> player_inventory = game2.player_inventories.get(nick).entrySet().stream().findFirst().get();
-        Bukkit.getPlayer(nick).getInventory().setContents(player_inventory.getKey());
-        Bukkit.getPlayer(nick).getInventory().setArmorContents(player_inventory.getValue());
-        game2.player_inventories.remove(nick);
-        stopIfEmpty(game2, game);
+        BWPlayerPreGameInventory player_inventory = game.getPlayer(nick).getPreGameInventory();
+        Bukkit.getPlayer(nick).getInventory().setContents(player_inventory.getInventory());
+        Bukkit.getPlayer(nick).getInventory().setArmorContents(player_inventory.getArmor());
+        game.removePlayer(nick);
+        stopIfEmpty(game, map);
         return ChatColor.AQUA + "You've left a map!";
     }
 
-    public static void proceedGame(String game) {
-        BWGame game2 = getGame(game);
-        if(game2.joined_players.size() != 1) return;
+    public static void proceedGame(String name) {
+        BWGame game = getGame(name);
+        if(game.getPlayerCount() != 1) return;
         int size = 0;
-        for(BWTeam team : getTeams(game)) size += team.size;
+        for(BWTeam team : getTeams(name)) size += team.getSize();
         AtomicBoolean start = new AtomicBoolean(false);
         final AtomicInteger count = new AtomicInteger(10);
         int finalSize = size;
         Bukkit.getServer().getScheduler().scheduleSyncRepeatingTask(new Main(), () -> {
-            if(game2.joined_players.size() > finalSize/2) {
+            if(game.getPlayerCount() > (finalSize / 2)) {
                 if(count.get() == 0) {
-                    if(game2.started) return;
-                    for(String player : game2.joined_players) Bukkit.getPlayer(player).sendMessage(ChatColor.AQUA + "Game has been started!");
-                    startGame(game);
+                    if(game.hasStarted()) return;
+                    for(BWPlayer player : game.getPlayers()) Bukkit.getPlayer(player.getName()).sendMessage(ChatColor.AQUA + "Game has been started!");
+                    startGame(name);
                     return;
                 }
-                for(String player : game2.joined_players) Bukkit.getPlayer(player).sendMessage(ChatColor.AQUA + "Game starts in " + count.get() + " seconds!");
+                for(BWPlayer player : game.getPlayers()) Bukkit.getPlayer(player.getName()).sendMessage(ChatColor.AQUA + "Game starts in " + count.get() + " seconds!");
                 count.set(count.get()-1);
                 start.set(true);
             } else if(start.get()) {
-                for(String player : game2.joined_players) Bukkit.getPlayer(player).sendMessage(ChatColor.AQUA + "Not enough players, counting has been paused.");
+                for(BWPlayer player : game.getPlayers()) Bukkit.getPlayer(player.getName()).sendMessage(ChatColor.AQUA + "Not enough players, counting has been paused.");
                 count.set(10);
                 start.set(false);
             }
@@ -263,97 +219,85 @@ public class Game {
     }
 
     public static String forceStart(String nick) {
-        String game = getPlayerMap(nick);
-        BWGame game2 = getGame(game);
-        if(game2 != null) {
-            if((game2.joined_players.size() > 1) || (Objects.equals(cfg.get("config", "debug"), "true"))) {
-                startGame(game);
+        String map = getPlayerMap(nick);
+        BWGame game = getGame(map);
+        if(game != null) {
+            if((game.getPlayerCount() > 1) || (Objects.equals(cfg.get("config", "debug"), "true"))) {
+                startGame(map);
                 return ChatColor.AQUA + "Game has been started successfully!";
             } else return ChatColor.RED + "You need at least two players to play!";
         } else return ChatColor.RED + "You are not playing on any map!";
     }
 
-    public static void startGame(String game) {
-        BWGame game2 = getGame(game);
-        ArrayList<BWTeam> map_teams = getTeams(game);
-        if(game2.teams.size() != game2.joined_players.size()) {
+    public static void startGame(String map) {
+        BWGame game = getGame(map);
+        ArrayList<BWTeam> map_teams = getTeams(map);
+        if(game.getPlayersInTeamCount() != game.getPlayerCount()) {
             Map<String, String> game_teams = new HashMap<>();
-            for(BWTeam team : map_teams) game_teams.put(team.name, String.valueOf(team.size)); // I have no idea why this needs size as a string, or basically size at all, see comment just below.
-            for(String player : game2.joined_players) {
-                if(!game2.teams.containsKey(player)) {
-                    for(Map.Entry<String, String> team : game_teams.entrySet()) {
-                        int count = 0;
-                        for(Map.Entry<String, String> team_count : game2.teams.entrySet()) {
-                            if(team_count.getValue().equals(team.getKey())) count++; // Comparing size with team name? Will have to figure this out later, currently only fixing up the code after changing team to a class.
-                        }
-                        if(count < getTeam(game, team.getKey()).size) {
-                            joinTeam(player, team.getKey());
+            for(BWTeam team : map_teams) game_teams.put(team.getName(), String.valueOf(team.getSize())); // I have no idea why this needs size as a string, or basically size at all, see comment just below.
+            for(BWPlayer player : game.getPlayers()) {
+                if(player.getTeam() == null) {
+                    for(BWTeam team : getTeams(map)) {
+                        if(game.getTeamCount(team.getName()) < team.getSize()) {
+                            joinTeam(player.getName(), team.getName());
                             break;
                         }
-                        /*if((count != Integer.parseInt(team.getValue())) && (game2.joined_players.size() > 2)) {
-                            joinTeam(player, team.getKey());
-                            break;
-                        } else if(count == 0) {
-                            joinTeam(player, team.getKey());
-                            break;
-                        }*/
-
                     }
                 }
             }
         }
         for(BWTeam team : map_teams) {
-            game2.beds.put(team.bed1.getBlock().getState().getData(), team.bed1);
-            game2.beds.put(team.bed2.getBlock().getState().getData(), team.bed2);
+            game.beds.put(team.getBedPos1().getBlock().getState().getData(), team.getBedPos1());
+            game.beds.put(team.getBedPos2().getBlock().getState().getData(), team.getBedPos2());
         }
-        for(String player : game2.joined_players) Bukkit.getPlayer(player).teleport(getTeam(game, getPlayerTeam(player)).spawn);
-        for(BWTeam team : getTeams(game)) createNpc(game, team.villager);
-        for(Map.Entry<String, Map<String, Object>> spawner : getSpawners(game).entrySet()) {
+        for(BWPlayer player : game.getPlayers()) Bukkit.getPlayer(player.getName()).teleport(getTeam(map, getPlayerTeam(player.getName()).getName()).getSpawn());
+        for(BWTeam team : getTeams(map)) createNpc(map, team.getVillager());
+        for(Map.Entry<String, Map<String, Object>> spawner : getSpawners(map).entrySet()) {
             int id = Bukkit.getServer().getScheduler().scheduleAsyncRepeatingTask(new Main(), () -> {
-                BWGame game3 = getGame(game);
+                BWGame game3 = getGame(map);
                 if(game3 == null) return;
-                game3.items.add(Bukkit.getWorld(cfg.get(game, "world")).dropItem((Location) spawner.getValue().get("location"), new ItemStack(Material.getMaterial(String.valueOf(spawner.getValue().get("type"))), 1)));
+                game3.items.add(Bukkit.getWorld(cfg.get(map, "world")).dropItem((Location) spawner.getValue().get("location"), new ItemStack(Material.getMaterial(String.valueOf(spawner.getValue().get("type"))), 1)));
             }, 0L, Integer.parseInt(String.valueOf(spawner.getValue().get("time"))) * 20L);
-            game2.task_ids.add(id);
+            game.task_ids.add(id);
         }
-        Block.blocks.put(game, new ArrayList<>());
-        game2.started = true;
+        Block.blocks.put(map, new ArrayList<>());
+        game.setStarted(true);
     }
 
-    public static String endGame(String game) {
-        BWGame game2 = getGame(game);
-        if(game2 == null) return ChatColor.RED + "The given map is not running!";
+    public static String endGame(String map) {
+        BWGame game = getGame(map);
+        if(game == null) return ChatColor.RED + "The given map is not running!";
         for(Map.Entry<String, ArrayList<Location>> blocks : Block.blocks.entrySet()) {
-            if(blocks.getKey().equals(game)) {
+            if(blocks.getKey().equals(map)) {
                 for(Location location : blocks.getValue()) location.getBlock().setType(Material.AIR);
             }
         }
-        for(Map.Entry<MaterialData, Location> bed : game2.beds.entrySet()) {
+        for(Map.Entry<MaterialData, Location> bed : game.beds.entrySet()) {
             //Bukkit.getWorld(cfg.get(game, "world")).getBlockAt(bed.getValue()).setType(bed.getKey());
-            Bukkit.getWorld(cfg.get(game, "world")).getBlockAt(bed.getValue()).setTypeIdAndData(bed.getKey().getItemTypeId(), bed.getKey().getData(), false);
+            Bukkit.getWorld(cfg.get(map, "world")).getBlockAt(bed.getValue()).setTypeIdAndData(bed.getKey().getItemTypeId(), bed.getKey().getData(), false);
         }
-        ArrayList<String> joined_players_copy = new ArrayList<>(game2.joined_players);
-        for(String player : joined_players_copy) leaveGame(player);
-        ArrayList<Integer> tasks_copy = new ArrayList<>(game2.task_ids);
+        ArrayList<BWPlayer> players_copy = new ArrayList<>(game.getPlayers());
+        for(BWPlayer player : players_copy) leaveGame(player.getName());
+        ArrayList<Integer> tasks_copy = new ArrayList<>(game.task_ids);
         for(Integer data : tasks_copy) {
             Bukkit.getScheduler().cancelTask(data);
-            game2.task_ids.remove(data);
+            game.task_ids.remove(data);
         }
-        HashMap<Integer, Location> npcs_copy = new HashMap<>(game2.npcs);
+        HashMap<Integer, Location> npcs_copy = new HashMap<>(game.npcs);
         for(Map.Entry<Integer, Location> data : npcs_copy.entrySet()) {
             try {
                 for(Entity e : data.getValue().getWorld().getEntities()) {
                     if(e.getEntityId() == data.getKey()) e.remove();
                 }
-                game2.npcs.remove(data.getKey());
+                game.npcs.remove(data.getKey());
             } catch(Exception ignored) {}
         }
-        ArrayList<Item> items_copy = new ArrayList<>(game2.items);
+        ArrayList<Item> items_copy = new ArrayList<>(game.items);
         for(Item item : items_copy) {
             item.remove();
-            game2.items.remove(item);
+            game.items.remove(item);
         }
-        for(Map.Entry<Location, ItemStack[]> entry : game2.chests.entrySet()) {
+        for(Map.Entry<Location, ItemStack[]> entry : game.chests.entrySet()) {
             if(entry.getKey().getBlock().getState() instanceof Chest) {
                 Chest chest = (Chest) entry.getKey().getBlock().getState();
                 ItemStack[] item_stack = new ItemStack[entry.getValue().length];
@@ -370,8 +314,8 @@ public class Game {
                 chest.update(true);
             }
         }
-        game2.reset();
-        games.remove(game);
+        game.reset();
+        games.remove(map);
         return ChatColor.AQUA + "Map has been stopped successfully.";
     }
 
@@ -385,15 +329,13 @@ public class Game {
     }
     public static boolean isPlayerPlaying(String nick) {
         for(Map.Entry<String, BWGame> data : games.entrySet()) {
-            if(data.getValue().joined_players.contains(nick)) return true;
+            if(data.getValue().isPlayerPlaying(nick)) return true;
         }
         return false;
     }
     public static String getPlayerMap(String nick) {
         for(Map.Entry<String, BWGame> data : games.entrySet()) {
-            if(data.getValue().joined_players.contains(nick)) {
-                return data.getKey();
-            }
+            if(data.getValue().isPlayerPlaying(nick)) return data.getKey();
         }
         return "";
     }
@@ -404,17 +346,17 @@ public class Game {
         return false;
     }
 
-    public static boolean stopIfEmpty(BWGame game2, String game) {
-        if(game2.joined_players.size() > 0) {
+    public static boolean stopIfEmpty(BWGame game, String map) {
+        if(game.getPlayerCount() > 0) {
             String team = null;
-            for (String nick : game2.joined_players) {
-                String player_team = getPlayerTeam(nick);
+            for (BWPlayer player : game.getPlayers()) {
+                String player_team = player.getTeam().getName();
                 if(team == null) team = player_team;
                 else if(!team.equals(player_team)) return false;
             }
-            for(String player : game2.joined_players) Bukkit.getPlayer(player).sendMessage(ChatColor.AQUA + "Team \"" + team + "\" won!");
+            for(BWPlayer player : game.getPlayers()) Bukkit.getPlayer(player.getName()).sendMessage(ChatColor.AQUA + "Team \"" + team + "\" won!");
         }
-        endGame(game);
+        endGame(map);
         return true;
     }
 }

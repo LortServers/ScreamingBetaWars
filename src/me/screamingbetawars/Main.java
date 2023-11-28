@@ -129,7 +129,7 @@ public class Main extends JavaPlugin implements CommandExecutor, Listener, Event
                 if(args[2].equals("create")) sender.sendMessage(cfg.create(args[1], sender));
                 else if(args[2].equals("edit")) {
                     if(cfg.check(args[1], true, false).equals("true")) {
-                        if(Game.getGame(args[1]).started) {
+                        if(Game.getGame(args[1]).hasStarted()) {
                             sender.sendMessage(ChatColor.RED + "You cannot change the map state after the game has started!");
                             return true;
                         }

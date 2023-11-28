@@ -1,12 +1,15 @@
 package me.screamingbetawars;
 
 import net.minecraft.server.Packet60Explosion;
+
 import org.bukkit.*;
 import org.bukkit.craftbukkit.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.*;
+
 import me.screamingbetawars.Main.EventHandler;
+import me.screamingbetawars.classes.BWGame;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -35,7 +38,7 @@ public class Death extends EntityListener implements Listener {
             String name = ((Player) event.getEntity()).getName();
             if(Game.isPlayerPlaying(name)) {
                 String game = Game.getPlayerMap(name);
-                Game.BWGame game2 = Game.getGame(game);
+                BWGame game2 = Game.getGame(game);
                 if(!game2.destroyed_beds.contains(Game.getPlayerTeam(name))) {
                     time.put(((Player) event.getEntity()).getName(), (int) Instant.now().getEpochSecond() + (Integer.parseInt(ConfigManager.cfg.get("config", "respawn-time"))));
                 } else {

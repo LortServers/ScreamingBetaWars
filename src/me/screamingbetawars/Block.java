@@ -7,9 +7,13 @@ import org.bukkit.Material;
 import org.bukkit.block.Chest;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.*;
+import org.bukkit.event.player.PlayerInteractEvent;
+
 import me.screamingbetawars.ConfigManager.*;
 import me.screamingbetawars.Main.EventHandler;
-import org.bukkit.event.player.PlayerInteractEvent;
+import me.screamingbetawars.classes.BWGame;
+import me.screamingbetawars.classes.BWTeam;
+import me.screamingbetawars.classes.BWPlayer;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -38,26 +42,26 @@ public class Block extends BlockListener implements Listener {
         new ConfigIterator(location, map -> {
             if(Game.getPlayerMap(player_name).equals(map)) {
                 ArrayList<Location> locations = new ArrayList<>();
-                for(Game.BWTeam team : Game.getTeams(map)) {
-                    locations.add(team.bed1);
-                    locations.add(team.bed2);
+                for(BWTeam team : Game.getTeams(map)) {
+                    locations.add(team.getBedPos1());
+                    locations.add(team.getBedPos2());
                 }
                 boolean check = false;
                 for(Location bed : locations) {
                     if(bed.distance(location) == 0) {
                         check = true;
-                        Game.BWGame game2 = Game.getGame(map);
-                        for(Game.BWTeam team : Game.getTeams(map)) {
-                            Location bed1 = team.bed1, bed2 = team.bed2;
+                        BWGame game = Game.getGame(map);
+                        for(BWTeam team : Game.getTeams(map)) {
+                            Location bed1 = team.getBedPos1(), bed2 = team.getBedPos2();
                             if(((location.getBlockX() == bed1.getBlockX()) && (location.getBlockY() == bed1.getBlockY()) && (location.getBlockZ() == bed1.getBlockZ())) || ((location.getBlockX() == bed2.getBlockX()) && (location.getBlockY() == bed2.getBlockY()) && (location.getBlockZ() == bed2.getBlockZ()))) {
-                                if(Game.getPlayerTeam(player_name).equals(team.name)) {
+                                if(Game.getPlayerTeam(player_name).equals(team.getName())) {
                                     event.getPlayer().sendMessage(ChatColor.RED + "You can't destroy your own bed!");
                                     event.setCancelled(true);
                                     return;
                                 }
-                                if(!game2.destroyed_beds.contains(team.name)) {
-                                    game2.destroyed_beds.add(team.name);
-                                    for(String username : game2.joined_players) Bukkit.getPlayer(username).sendMessage(ChatColor.AQUA + "Player " + player_name + " has destroyed the bed of team \"" + team.name + "\".");
+                                if(!game.destroyed_beds.contains(team.getName())) {
+                                    game.destroyed_beds.add(team.getName());
+                                    for(BWPlayer player : game.getPlayers()) Bukkit.getPlayer(player.getName()).sendMessage(ChatColor.AQUA + "Player " + player_name + " has destroyed the bed of team \"" + team.getName() + "\".");
                                 }
                             }
                         }
@@ -101,7 +105,7 @@ public class Block extends BlockListener implements Listener {
             Location location = block.getLocation();
             new ConfigIterator(block.getLocation(), map -> {
                 if(!blocks.get(map).contains(location)) {
-                    if(!Game.getGame(map).started) event.setCancelled(true);
+                    if(!Game.getGame(map).hasStarted()) event.setCancelled(true);
                     else Game.getGame(map).chests.putIfAbsent(location, ((Chest) block.getState()).getInventory().getContents());
                 }
             });
