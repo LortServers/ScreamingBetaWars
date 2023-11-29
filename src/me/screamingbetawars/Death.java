@@ -39,7 +39,7 @@ public class Death extends EntityListener implements Listener {
             if(Game.isPlayerPlaying(name)) {
                 String game = Game.getPlayerMap(name);
                 BWGame game2 = Game.getGame(game);
-                if(!game2.destroyed_beds.contains(Game.getPlayerTeam(name))) {
+                if(!Game.getPlayerTeam(name).isBedDestroyed()) {
                     time.put(((Player) event.getEntity()).getName(), (int) Instant.now().getEpochSecond() + (Integer.parseInt(ConfigManager.cfg.get("config", "respawn-time"))));
                 } else {
                     Game.leaveGame(name);

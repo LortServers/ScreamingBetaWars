@@ -42,7 +42,7 @@ public class Block extends BlockListener implements Listener {
         new ConfigIterator(location, map -> {
             if(Game.getPlayerMap(player_name).equals(map)) {
                 ArrayList<Location> locations = new ArrayList<>();
-                for(BWTeam team : Game.getTeams(map)) {
+                for(BWTeam team : Game.getGame(map).getTeams()) {
                     locations.add(team.getBedPos1());
                     locations.add(team.getBedPos2());
                 }
@@ -51,7 +51,7 @@ public class Block extends BlockListener implements Listener {
                     if(bed.distance(location) == 0) {
                         check = true;
                         BWGame game = Game.getGame(map);
-                        for(BWTeam team : Game.getTeams(map)) {
+                        for(BWTeam team : game.getTeams()) {
                             Location bed1 = team.getBedPos1(), bed2 = team.getBedPos2();
                             if(((location.getBlockX() == bed1.getBlockX()) && (location.getBlockY() == bed1.getBlockY()) && (location.getBlockZ() == bed1.getBlockZ())) || ((location.getBlockX() == bed2.getBlockX()) && (location.getBlockY() == bed2.getBlockY()) && (location.getBlockZ() == bed2.getBlockZ()))) {
                                 if(Game.getPlayerTeam(player_name).equals(team.getName())) {
@@ -59,8 +59,8 @@ public class Block extends BlockListener implements Listener {
                                     event.setCancelled(true);
                                     return;
                                 }
-                                if(!game.destroyed_beds.contains(team.getName())) {
-                                    game.destroyed_beds.add(team.getName());
+                                if(!team.isBedDestroyed()) {
+                                    team.destroyBed();
                                     for(BWPlayer player : game.getPlayers()) Bukkit.getPlayer(player.getName()).sendMessage(ChatColor.AQUA + "Player " + player_name + " has destroyed the bed of team \"" + team.getName() + "\".");
                                 }
                             }

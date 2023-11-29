@@ -11,9 +11,9 @@ import java.util.HashMap;
 public class BWGame {
     private boolean started = false;
     public static ArrayList<BWPlayer> players = new ArrayList<>();
-    public static HashMap<MaterialData, Location> beds = new HashMap<>(); // May do something with it.
+    public static ArrayList<BWTeam> teams = new ArrayList<>();
+    public static HashMap<MaterialData, Location> beds = new HashMap<>();
     public static HashMap<Integer, Location> npcs = new HashMap<>();
-    public static ArrayList<String> destroyed_beds = new ArrayList<>();
     public static ArrayList<Integer> task_ids = new ArrayList<>();
     public static ArrayList<Item> items = new ArrayList<>();
     public static HashMap<Location, ItemStack[]> chests = new HashMap<>();
@@ -22,7 +22,6 @@ public class BWGame {
         players = new ArrayList<>();
         beds = new HashMap<>();
         npcs = new HashMap<>();
-        destroyed_beds = new ArrayList<>();
         task_ids = new ArrayList<>();
         items = new ArrayList<>();
         chests = new HashMap<>();
@@ -54,4 +53,11 @@ public class BWGame {
         for(BWPlayer player : players) { if(player.getTeam().getName().equals(name)) count++; }
         return count;
     }
+
+    public BWTeam getTeam(String name) {
+        for(BWTeam team : teams) { if(team.getName().equals(name)) return team; }
+        return null;
+    }
+    public ArrayList<BWTeam> getTeams() { return teams; }
+    public void setTeams(ArrayList<BWTeam> t) { teams = t; }
 }

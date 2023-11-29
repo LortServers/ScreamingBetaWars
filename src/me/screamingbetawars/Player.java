@@ -10,6 +10,7 @@ import org.bukkit.event.player.*;
 import org.bukkit.inventory.ItemStack;
 
 import me.screamingbetawars.Main.EventHandler;
+import me.screamingbetawars.classes.BWGame;
 
 import java.lang.reflect.Field;
 import java.time.Instant;
@@ -41,14 +42,14 @@ public class Player extends PlayerListener implements Listener, EventListener {
     public void onRespawn(PlayerRespawnEvent event) {
         String nick = event.getPlayer().getName();
         if(Game.isPlayerPlaying(nick)) {
-            String game = Game.getPlayerMap(nick);
-            if(Death.time.get(nick) <= Instant.now().getEpochSecond()) event.setRespawnLocation(Game.getTeam(game, Game.getPlayerTeam(nick).getName()).getSpawn());
+            String map = Game.getPlayerMap(nick);
+            if(Death.time.get(nick) <= Instant.now().getEpochSecond()) event.setRespawnLocation(Game.getGame(map).getTeam(Game.getPlayerTeam(nick).getName()).getSpawn());
             else {
-                event.setRespawnLocation(ConfigManager.cfg.getLocation(game, "spec-"));
+                event.setRespawnLocation(ConfigManager.cfg.getLocation(map, "spec-"));
                 respawn_run_ids.put(nick,
                     Bukkit.getServer().getScheduler().scheduleSyncRepeatingTask(new Main(), () -> {
                         if(Death.time.get(nick) <= Instant.now().getEpochSecond()) {
-                            event.getPlayer().teleport(Game.getTeam(game, Game.getPlayerTeam(nick).getName()).getSpawn());
+                            event.getPlayer().teleport(Game.getGame(map).getTeam(Game.getPlayerTeam(nick).getName()).getSpawn());
                             removePlayerFromRespawn(nick);
                         } else event.getPlayer().sendMessage(ChatColor.AQUA + "You will respawn in " + (Death.time.get(nick) - Instant.now().getEpochSecond()) + " seconds!");
                     }, 0L, 20L)
@@ -76,9 +77,10 @@ public class Player extends PlayerListener implements Listener, EventListener {
     @EventHandler
     public void onMessage(PlayerChatEvent event) {
         String nick = event.getPlayer().getName();
-        if((Game.isPlayerPlaying(nick)) && (Game.getGame(Game.getPlayerMap(nick)).hasStarted())) {
+        BWGame game = Game.getGame(Game.getPlayerMap(nick));
+        if((Game.isPlayerPlaying(nick)) && (game.hasStarted())) {
             String team = Game.getPlayerTeam(nick).getName();
-            event.setFormat("[" + ChatColor.valueOf(Game.getTeam(Game.getPlayerMap(nick), team).getColor()) + team.toUpperCase() + ChatColor.WHITE + "] <" + nick + "> " + event.getMessage());
+            event.setFormat("[" + ChatColor.valueOf(game.getTeam(team).getColor()) + team.toUpperCase() + ChatColor.WHITE + "] <" + nick + "> " + event.getMessage());
         }
     }
 

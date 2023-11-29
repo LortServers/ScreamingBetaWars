@@ -11,6 +11,7 @@ public class BWTeam {
     private static Location bed2;
     private static Location villager;
     private static Location spawn;
+    private static boolean bed_destroyed = false;
 
     public BWTeam(String n, String c, int s, Location b1, Location b2, Location v, Location s2) {
         name = n;
@@ -42,4 +43,10 @@ public class BWTeam {
 
     @NotNull
     public Location getSpawn() { return spawn; }
+
+    @NotNull
+    public void destroyBed() { bed_destroyed = true; }
+
+    @NotNull
+    public boolean isBedDestroyed() { return bed_destroyed; }
 }
