@@ -4,13 +4,21 @@ import com.sun.istack.internal.NotNull;
 import org.bukkit.Location;
 
 public class BWTeam {
+
     private static String name;
+
     private static String color;
+
     private static int size;
+
     private static Location bed1;
+
     private static Location bed2;
+
     private static Location villager;
+
     private static Location spawn;
+
     private static boolean bed_destroyed = false;
 
     public BWTeam(String n, String c, int s, Location b1, Location b2, Location v, Location s2) {
@@ -24,29 +32,48 @@ public class BWTeam {
     }
 
     @NotNull
-    public String getName() { return name; }
+    public String getName() {
+        return name;
+    }
 
     @NotNull
-    public String getColor() { return color; }
+    public String getColor() {
+        return color;
+    }
 
     @NotNull
-    public int getSize() { return size; }
+    public int getSize() {
+        return size;
+    }
 
     @NotNull
-    public Location getBedPos1() { return bed1; }
+    public Location getBedPos1() {
+        return bed1;
+    }
 
     @NotNull
-    public Location getBedPos2() { return bed2; }
+    public Location getBedPos2() {
+        return bed2;
+    }
 
     @NotNull
-    public Location getVillager() { return villager; }
+    public Location getVillager() {
+        return villager;
+    }
 
     @NotNull
-    public Location getSpawn() { return spawn; }
+    public Location getSpawn() {
+        return spawn;
+    }
 
     @NotNull
-    public void destroyBed() { bed_destroyed = true; }
+    public void destroyBed() {
+        bed_destroyed = true;
+    }
 
     @NotNull
-    public boolean isBedDestroyed() { return bed_destroyed; }
+    public boolean isBedDestroyed() {
+        return bed_destroyed;
+    }
+
 }

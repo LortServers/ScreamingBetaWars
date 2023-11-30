@@ -9,14 +9,31 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 public class BWGame {
+
+    private final String name;
+
     private boolean started = false;
+
     public static ArrayList<BWPlayer> players = new ArrayList<>();
+
     public static ArrayList<BWTeam> teams = new ArrayList<>();
+
+    public static ArrayList<BWSpawner> spawners = new ArrayList<>();
+
     public static HashMap<MaterialData, Location> beds = new HashMap<>();
+
     public static HashMap<Integer, Location> npcs = new HashMap<>();
+
     public static ArrayList<Integer> task_ids = new ArrayList<>();
+
     public static ArrayList<Item> items = new ArrayList<>();
+
     public static HashMap<Location, ItemStack[]> chests = new HashMap<>();
+
+    public BWGame(String n) {
+        name = n;
+    }
+
     public void reset() {
         started = false;
         players = new ArrayList<>();
@@ -26,38 +43,90 @@ public class BWGame {
         items = new ArrayList<>();
         chests = new HashMap<>();
     }
+
+    public String getName() {
+        return name;
+    }
+
     public void addPlayer(String name) {
         players.add(new BWPlayer(name)); // We're assuming that whoever uses this public function does acknowledge that you are able to add the same player multiple times.
     }
+
     public void removePlayer(String name) {
         players.remove(getPlayer(name));
     }
+
     public BWPlayer getPlayer(String name) {
-        for(BWPlayer player : players) { if(player.getName().equals(name)) return player; }
+        for (BWPlayer player : players) {
+            if (player.getName().equals(name)) {
+                return player;
+            }
+        }
         return null;
     }
-    public boolean isPlayerPlaying(String name) { return (getPlayer(name) != null); }
-    public int getPlayerCount() { return players.size(); }
-    public ArrayList<BWPlayer> getPlayers() { return players; }
+
+    public boolean isPlayerPlaying(String name) {
+        return (getPlayer(name) != null);
+    }
+
+    public int getPlayerCount() {
+        return players.size();
+    }
+
+    public ArrayList<BWPlayer> getPlayers() {
+        return players;
+    }
+
     public int getPlayersInTeamCount() {
         int count = 0;
-        for(BWPlayer player : players) { if(player.getTeam() != null) count++; }
+        for (BWPlayer player : players) {
+            if (player.getTeam() != null) {
+                count++;
+            }
+        }
         return count;
     }
 
-    public boolean hasStarted() { return started; }
-    public void setStarted(boolean s) { started = s; }
+    public boolean hasStarted() {
+        return started;
+    }
+
+    public void setStarted(boolean s) {
+        started = s;
+    }
 
     public int getTeamCount(String name) {
         int count = 0;
-        for(BWPlayer player : players) { if(player.getTeam().getName().equals(name)) count++; }
+        for (BWPlayer player : players) {
+            if (player.getTeam().getName().equals(name)) {
+                count++;
+            }
+        }
         return count;
     }
 
     public BWTeam getTeam(String name) {
-        for(BWTeam team : teams) { if(team.getName().equals(name)) return team; }
+        for (BWTeam team : teams) {
+            if (team.getName().equals(name)) {
+                return team;
+            }
+        }
         return null;
     }
-    public ArrayList<BWTeam> getTeams() { return teams; }
-    public void setTeams(ArrayList<BWTeam> t) { teams = t; }
+
+    public ArrayList<BWTeam> getTeams() {
+        return teams;
+    }
+
+    public void setTeams(ArrayList<BWTeam> t) {
+        teams = t;
+    }
+
+    public void setSpawners(ArrayList<BWSpawner> s) { // I would say that it should be in the initializer, however let's allow people to modify the game experience with their own plugins.
+        spawners = s;
+    }
+
+    public ArrayList<BWSpawner> getSpawners() {
+        return spawners;
+    }
 }

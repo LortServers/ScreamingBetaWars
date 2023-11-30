@@ -13,8 +13,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ConfigManager {
+
     public static Map<String, Map<String, Object>> map_cache = new HashMap<>();
+
     public static class cfg {
+
         public static DumperOptions getYamlOptions() {
             DumperOptions options = new DumperOptions();
             options.setIndent(2);
@@ -25,30 +28,41 @@ public class ConfigManager {
 
         public static void update() {
             File[] list = Bukkit.getServer().getPluginManager().getPlugin("ScreamingBetaWars").getDataFolder().listFiles();
-            if(list == null) return;
-            for(File yaml_file : list) {
-                if(!yaml_file.isDirectory()) {
+            if (list == null) return;
+            for (File yaml_file : list) {
+                if (!yaml_file.isDirectory()) {
                     try {
                         Yaml yaml = new Yaml(cfg.getYamlOptions());
                         InputStream file = Files.newInputStream(yaml_file.toPath());
-                        if(yaml_file.getName().equals("config.yml")) continue;
+                        if (yaml_file.getName().equals("config.yml")) {
+                            continue;
+                        }
                         map_cache.put(yaml_file.getName().replace(".yml", ""), (Map<String, Object>) yaml.load(file));
-                    } catch(Exception ignored) {}
+                    } catch (Exception ignored) {}
                 }
             }
         }
 
         public static String check(String arg, boolean map_exists) {
-            if(map_cache.containsKey(arg) == map_exists) return "true";
-            else return ChatColor.RED + "Map already exists!";
+            if (map_cache.containsKey(arg) == map_exists) {
+                return "true";
+            } else {
+                return ChatColor.RED + "Map already exists!";
+            }
         }
 
         public static String check(String arg, boolean map_exists, boolean edit) {
-            if(check(arg, true).equals(String.valueOf(map_exists))) {
-                if(cfg.get(arg, "edit") == null) return "false";
-                if(cfg.get(arg, "edit").equals(String.valueOf(edit))) return "true";
-                else return ChatColor.RED + "Map is not being edited!";
-            } else return ChatColor.RED + "Map not found.";
+            if (check(arg, true).equals(String.valueOf(map_exists))) {
+                if (cfg.get(arg, "edit") == null) {
+                    return "false";
+                } else if (cfg.get(arg, "edit").equals(String.valueOf(edit))) {
+                    return "true";
+                } else {
+                    return ChatColor.RED + "Map is not being edited!";
+                }
+            } else {
+                return ChatColor.RED + "Map not found.";
+            }
         }
 
         public static void put(String arg, String key, Object value) {
@@ -59,9 +73,12 @@ public class ConfigManager {
                 PrintWriter file_save = new PrintWriter(check_file);
                 map_data.put(key, value);
                 yaml.dump(map_data, file_save);
-                if(map_cache.containsKey(arg)) map_cache.get(arg).replace(key, value);
-                else map_cache.get(arg).put(key, value);
-            } catch(Exception ignored) {}
+                if (map_cache.containsKey(arg)) {
+                    map_cache.get(arg).replace(key, value);
+                } else {
+                    map_cache.get(arg).put(key, value);
+                }
+            } catch (Exception ignored) {}
         }
 
         public static void putLocation(String arg, String key, String nick) {
@@ -87,7 +104,7 @@ public class ConfigManager {
                 map_data.remove(key);
                 yaml.dump(map_data, file_save);
                 map_cache.get(arg).remove(key);
-            } catch(Exception ignored) {}
+            } catch (Exception ignored) {}
         }
 
         public static void removeLocation(String arg, String key) {
@@ -101,9 +118,11 @@ public class ConfigManager {
         }
 
         public static String create(String arg, CommandSender sender) {
-            if(arg.equals("config")) return ChatColor.RED + "You can't name your map \"config\", it's been used by the plugin itself!";
-            if(arg.equals("shop_file")) return ChatColor.RED + "You can't name your map \"shop_file\", it's been used by the plugin itself!";
-            if(!map_cache.containsKey(arg)) {
+            if (arg.equals("config")) {
+                return ChatColor.RED + "You can't name your map \"config\", it's been used by the plugin itself!"; // ... store map files in other directory then?
+            } else if (arg.equals("shop_file")) {
+                return ChatColor.RED + "You can't name your map \"shop_file\", it's been used by the plugin itself!";
+            } else if (!map_cache.containsKey(arg)) {
                 try {
                     Bukkit.getServer().getPluginManager().getPlugin("ScreamingBetaWars").getDataFolder().mkdir();
                     new File(Bukkit.getServer().getPluginManager().getPlugin("ScreamingBetaWars").getDataFolder(), arg + ".yml").createNewFile();
@@ -113,7 +132,9 @@ public class ConfigManager {
                     cfg.put(arg, "spawners", "1");
                     cfg.put(arg, "world", sender.getServer().getPlayer(sender.getName()).getWorld().getName());
                     return ChatColor.AQUA + "Map \"" + arg + "\" created successfully.";
-                } catch (Exception e) { return ChatColor.RED + "Something went wrong. Please contact us using this error code: 0x000002."; }
+                } catch (Exception e) {
+                    return ChatColor.RED + "Something went wrong. Please contact us using this error code: 0x000002.";
+                }
             } else return ChatColor.RED + "Map already exists!";
         }
 
@@ -136,17 +157,19 @@ public class ConfigManager {
         public static Location getLocation(String arg, String key) {
             try {
                 return new Location(Bukkit.getServer().getWorld(cfg.get(arg, "world")), cfg.getInt(arg, key + "x"), cfg.getInt(arg, key + "y"), cfg.getInt(arg, key + "z"));
-            } catch(Exception e) {
+            } catch (Exception e) {
                 return null;
             }
         }
 
         public static Map<String, Object> getStartingWith(String arg, String pattern) {
             HashMap<String, Object> list = new HashMap<>(cfg.get(arg));
-            for(String key : cfg.get(arg).keySet()) {
-                if(!key.startsWith(pattern)) list.remove(key);
+            for (String key : cfg.get(arg).keySet()) {
+                if (!key.startsWith(pattern)) list.remove(key);
             }
             return list;
         }
+
     }
+
 }

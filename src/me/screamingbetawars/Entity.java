@@ -17,7 +17,9 @@ import java.util.regex.Pattern;
 public class Entity extends PlayerListener implements Listener {
     @EventHandler
     public void onPlayerInteract(PlayerInteractEntityEvent event) {
-        if((!Game.getPlayerMap(event.getPlayer().getName()).equals("")) && (Game.isGameNPC(event.getRightClicked().getEntityId()))) openShop(event.getPlayer());
+        if ((!Game.getPlayerMap(event.getPlayer().getName()).equals("")) && (Game.isGameNPC(event.getRightClicked().getEntityId()))) {
+            openShop(event.getPlayer());
+        }
     }
 
     // Packet102WindowClick - possible way of receiving clicked item slots
@@ -30,11 +32,11 @@ public class Entity extends PlayerListener implements Listener {
             shop.c = "BedWars Shop";
             shop.d = 27;
             ((CraftPlayer) player).getHandle().netServerHandler.sendPacket(shop);
-            for(int i = 1; i<=9; i++) {
+            for (int i = 1; i<=9; i++) {
                 String data = ConfigManager.cfg.get("shop_file", "slot-" + i);
                 Matcher matcher = Pattern.compile("(.+?);").matcher(data);
                 ArrayList<String> data_list = new ArrayList<>();
-                while(matcher.find()) {
+                while (matcher.find()) {
                     data_list.add(matcher.group(1));
                 }
                 Packet103SetSlot packet1 = new Packet103SetSlot();
@@ -52,7 +54,9 @@ public class Entity extends PlayerListener implements Listener {
                 packet2.c = item2;
                 ((CraftPlayer) player).getHandle().netServerHandler.sendPacket(packet2);
             }
-        } catch(NullPointerException e) { player.sendMessage(e.getStackTrace()[0].toString()); }
+        } catch (NullPointerException e) {
+            player.sendMessage(e.getStackTrace()[0].toString());
+        }
         player.sendMessage(ChatColor.GOLD + "You've opened the shop!");
     }
 }
